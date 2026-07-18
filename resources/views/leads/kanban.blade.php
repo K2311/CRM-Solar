@@ -28,7 +28,7 @@
                 <div style="width: 8px; height: 8px; border-radius: 50%; background: {{ \App\Models\Lead::stageColors()[$stage] ?? '#eee' }}"></div>
             </div>
 
-            <div style="flex: 1; border-top: 2px solid {{ \App\Models\Lead::stageColors()[$stage] ?? '#334155' }}; padding-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+            <div class="cards-container" style="flex: 1; overflow-y: auto; overflow-x: hidden; border-top: 2px solid {{ \App\Models\Lead::stageColors()[$stage] ?? '#334155' }}; padding-top: 1rem; padding-right: 0.5rem; display: flex; flex-direction: column; gap: 1rem;">
                 @forelse($leadsByStage[$stage] ?? [] as $lead)
                 <div class="card glass-card animate-fade" style="padding: 1.25rem; cursor: pointer; transition: transform 0.2s;" onclick="location.href='{{ route('leads.show', $lead) }}'">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
