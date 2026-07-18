@@ -11,6 +11,7 @@ class Product extends Model
 
     protected $fillable = [
         'company_id', 'name', 'category', 'sku', 'description', 'unit_price', 'unit', 'is_active',
+        'brand', 'gst_rate', 'capacity_watts',
     ];
 
     public function company() { return $this->belongsTo(Company::class); }

@@ -41,7 +41,15 @@
 
                     <div>
                         <label class="form-label">Lead Source</label>
-                        <input type="text" name="source" class="form-control" value="{{ old('source') }}" placeholder="e.g. Website, Referral, FB Ad">
+                        <select name="source" class="form-control">
+                            <option value="">Select source...</option>
+                            <option value="referral" {{ old('source') == 'referral' ? 'selected' : '' }}>Referral</option>
+                            <option value="google_ads" {{ old('source') == 'google_ads' ? 'selected' : '' }}>Google Ads</option>
+                            <option value="dealer" {{ old('source') == 'dealer' ? 'selected' : '' }}>Dealer</option>
+                            <option value="walk_in" {{ old('source') == 'walk_in' ? 'selected' : '' }}>Walk-in</option>
+                            <option value="housing_society" {{ old('source') == 'housing_society' ? 'selected' : '' }}>Housing Society</option>
+                            <option value="other" {{ old('source') == 'other' ? 'selected' : '' }}>Other</option>
+                        </select>
                     </div>
 
                     <div>

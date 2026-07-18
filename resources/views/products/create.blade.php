@@ -35,7 +35,7 @@
                     </div>
 
                     <div>
-                        <label class="form-label">Unit Price ($)</label>
+                        <label class="form-label">Unit Price ({{ $currentCompany->currency_symbol }})</label>
                         <input type="number" name="unit_price" class="form-control" value="{{ old('unit_price') }}" step="0.01" required>
                     </div>
 

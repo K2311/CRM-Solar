@@ -27,10 +27,13 @@ class RegisterController extends Controller
         ]);
 
         $company = Company::create([
-            'name'     => $request->company_name,
-            'slug'     => Str::slug($request->company_name) . '-' . Str::random(4),
-            'timezone' => 'UTC',
-            'currency' => 'USD',
+            'name'            => $request->company_name,
+            'slug'            => Str::slug($request->company_name) . '-' . Str::random(4),
+            'timezone'        => 'UTC',
+            'currency'        => 'USD',
+            'plan'            => 'demo',
+            'plan_status'     => 'active',
+            'plan_expires_at' => now()->addDays(14),
         ]);
 
         $user = User::create([

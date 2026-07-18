@@ -1,15 +1,16 @@
 <x-app-layout title="Team & Permissions">
-    <div x-data="{ tab: 'users' }" class="card glass-card">
+    <div x-data="{ tab: '{{ $selectedUser ? 'user' : 'users' }}', showInviteModal: false }">
+    <div class="card glass-card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
             <div>
                 <h1 style="font-size: 1.5rem; font-weight: 800;">Access Control</h1>
                 <p style="color: var(--text-muted); font-size: 0.875rem;">Manage staff roles and granular permission overrides</p>
             </div>
-            <div style="display: flex; gap: 2rem; border-bottom: 1px solid var(--border);">
-                <button class="btn" style="border-radius: 0; padding: 1rem 0; font-weight: 700;" :style="tab === 'users' ? 'color: var(--primary); border-bottom: 2px solid var(--primary)' : 'color: var(--text-muted)'" @click="tab = 'users'">Team Members</button>
-                <button class="btn" style="border-radius: 0; padding: 1rem 0; font-weight: 700;" :style="tab === 'roles' ? 'color: var(--primary); border-bottom: 2px solid var(--primary)' : 'color: var(--text-muted)'" @click="tab = 'roles'">Role Defaults</button>
+            <div class="tab-container" style="display: flex; gap: 1rem;">
+                <button class="tab-pill" :class="{ 'active': tab === 'users' }" @click="tab = 'users'">Team Members</button>
+                <button class="tab-pill" :class="{ 'active': tab === 'roles' }" @click="tab = 'roles'">Role Defaults</button>
                 @if($selectedUser)
-                <button class="btn" style="border-radius: 0; padding: 1rem 0; font-weight: 700;" :style="tab === 'user' ? 'color: var(--primary); border-bottom: 2px solid var(--primary)' : 'color: var(--text-muted)'" @click="tab = 'user'">Overrides: {{ $selectedUser->name }}</button>
+                <button class="tab-pill" :class="{ 'active': tab === 'user' }" @click="tab = 'user'">Overrides: {{ $selectedUser->name }}</button>
                 @endif
             </div>
         </div>
@@ -17,7 +18,7 @@
         <!-- Team Members Tab -->
         <div x-show="tab === 'users'" class="animate-fade">
             <div style="display: flex; justify-content: flex-end; margin-bottom: 1.5rem;">
-                <button class="btn btn-primary" x-data @click="$dispatch('open-invite-modal')"><i class="bi bi-person-plus"></i> Invite Member</button>
+                <button class="btn btn-primary" @click="showInviteModal = true"><i class="bi bi-person-plus"></i> Invite Member</button>
             </div>
             <table class="data-table">
                 <thead>
@@ -62,8 +63,8 @@
 
         <!-- Role Defaults Tab -->
         <div x-show="tab === 'roles'" class="animate-fade">
-             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-                 @foreach(['admin', 'member'] as $role)
+             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem;">
+                 @foreach(['admin', 'member', 'sales', 'technician', 'accounts'] as $role)
                  <div class="card">
                      <h3 style="margin-bottom: 1.5rem; text-transform: capitalize;">{{ $role }} Default Permissions</h3>
                      <form action="{{ route('team.permissions.role') }}" method="POST">
@@ -111,7 +112,7 @@
                                  @foreach($perms as $p)
                                  <div style="display: flex; justify-content: space-between; align-items: center;">
                                      <span style="font-size: 0.875rem;">{{ $p->action }}</span>
-                                     <select name="permissions[{{ $p->id }}]" style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; color: white; padding: 2px 4px; font-size: 0.7rem;">
+                                     <select name="permissions[{{ $p->id }}]" style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; color: inherit; padding: 2px 4px; font-size: 0.7rem;">
                                          <option value="default">Default</option>
                                          <option value="grant" {{ ($userPermissions[$p->id] ?? '') === 'grant' ? 'selected' : '' }}>Grant</option>
                                          <option value="revoke" {{ ($userPermissions[$p->id] ?? '') === 'revoke' ? 'selected' : '' }}>Revoke</option>
@@ -128,5 +129,55 @@
              </div>
         </div>
         @endif
+    </div>
+        
+        <!-- Invite Modal -->
+        <template x-teleport="body">
+            <div x-show="showInviteModal">
+                <div style="display: flex; position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); align-items: center; justify-content: center;">
+                    <div @click.away="showInviteModal = false" class="card glass-card" style="width: 100%; max-width: 500px; margin: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="font-size: 1.25rem; font-weight: 700;">Invite Team Member</h3>
+                    <button @click="showInviteModal = false" style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: var(--text-muted);"><i class="bi bi-x-lg"></i></button>
+                </div>
+                
+                <form action="{{ route('team.invite') }}" method="POST">
+                    @csrf
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" name="password" class="form-control" required minlength="6">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Role</label>
+                        <select name="role" class="form-control" required>
+                            <option value="member">Member</option>
+                            <option value="admin">Admin</option>
+                            <option value="sales">Sales</option>
+                            <option value="technician">Technician</option>
+                            <option value="accounts">Accounts</option>
+                        </select>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+                        <button type="button" class="btn btn-outline" @click="showInviteModal = false">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Send Invite</button>
+                    </div>
+                </form>
+                    </div>
+                </div>
+            </div>
+        </template>
+
     </div>
 </x-app-layout>

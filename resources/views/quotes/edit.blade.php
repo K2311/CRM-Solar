@@ -58,6 +58,36 @@
                     </table>
                 </div>
 
+                <!-- Subsidy & Payment Milestones -->
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 2rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                        <div>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; font-weight: 600; margin-bottom: 1rem; color: white;">
+                                <input type="checkbox" name="has_subsidy" value="1" {{ old('has_subsidy', $quote->has_subsidy) ? 'checked' : '' }}>
+                                Apply PM Surya Ghar Subsidy
+                            </label>
+                            <p style="color: var(--text-muted); font-size: 0.75rem; line-height: 1.4;">Checks products for 'panel' category to determine system capacity in kW, and automatically calculates Central + State subsidy discounts.</p>
+                        </div>
+                        <div>
+                            <h4 style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.75rem;">Payment Schedule %</h4>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
+                                <div class="form-group" style="margin: 0;">
+                                    <label class="form-label" style="font-size: 0.7rem;">Advance %</label>
+                                    <input type="number" name="advance_milestone_pct" class="form-control" value="{{ old('advance_milestone_pct', $quote->advance_milestone_pct) }}">
+                                </div>
+                                <div class="form-group" style="margin: 0;">
+                                    <label class="form-label" style="font-size: 0.7rem;">Delivery %</label>
+                                    <input type="number" name="delivery_milestone_pct" class="form-control" value="{{ old('delivery_milestone_pct', $quote->delivery_milestone_pct) }}">
+                                </div>
+                                <div class="form-group" style="margin: 0;">
+                                    <label class="form-label" style="font-size: 0.7rem;">Commission %</label>
+                                    <input type="number" name="commissioning_milestone_pct" class="form-control" value="{{ old('commissioning_milestone_pct', $quote->commissioning_milestone_pct) }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div style="display: grid; grid-template-columns: 1fr 300px; gap: 2rem; border-top: 1px solid var(--border); padding-top: 2rem;">
                     <div>
                         <label class="form-label">Closing Notes / Terms</label>
@@ -73,7 +103,7 @@
                             <input type="number" name="tax_rate" class="form-control" step="0.1" value="{{ old('tax_rate', $quote->tax_rate) }}" style="width: 80px; text-align: right;">
                         </div>
                         <div style="display: flex; justify-content: space-between;">
-                            <span style="color: var(--text-muted);">Discount ($)</span>
+                            <span style="color: var(--text-muted);">Discount ({{ $currentCompany->currency_symbol }})</span>
                             <input type="number" name="discount" class="form-control" step="0.01" value="{{ old('discount', $quote->discount) }}" style="width: 120px; text-align: right;">
                         </div>
                         <div style="display: flex; justify-content: space-between; font-size: 1.25rem; font-weight: 800; border-top: 2px solid var(--border); padding-top: 1rem; margin-top: 0.5rem;">

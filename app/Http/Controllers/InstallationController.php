@@ -53,8 +53,81 @@ class InstallationController extends Controller
 
     public function show(Installation $installation)
     {
-        $installation->load('customer', 'lead', 'quote', 'assignedUser', 'serviceTickets', 'activities.user');
+        $installation->load([
+            'customer', 'lead', 'quote', 'assignedUser', 'serviceTickets', 'activities.user',
+            'milestones' => fn($q) => $q->orderBy('milestone_number')
+        ]);
         return view('installations.show', compact('installation'));
+    }
+
+    public function updateMilestone(Request $request, Installation $installation, \App\Models\InstallationMilestone $milestone)
+    {
+        $data = $request->validate([
+            'status' => 'required|in:pending,in_progress,completed',
+            'notes'  => 'nullable|string',
+            'photo'  => 'nullable|image|max:5000',
+        ]);
+
+        $updateData = [
+            'status' => $data['status'],
+            'notes'  => $data['notes'] ?? null,
+        ];
+
+        if ($data['status'] === 'completed') {
+            $updateData['completed_at'] = now();
+        } else {
+            $updateData['completed_at'] = null;
+        }
+
+        if ($request->hasFile('photo')) {
+            $path = $request->file('photo')->store('milestones', 'public');
+            $updateData['photo_path'] = $path;
+        }
+
+        $milestone->update($updateData);
+
+        // Milestone 9 Commissioning updates the installation to completed and creates GST invoice
+        if ($milestone->milestone_number == 9 && $data['status'] === 'completed') {
+            $installation->update([
+                'status'         => 'completed',
+                'completed_date' => now(),
+            ]);
+
+            // Auto-generate GST Invoice
+            $exists = \App\Models\GstInvoice::where('installation_id', $installation->id)->exists();
+            if (!$exists && $installation->quote) {
+                $quote = $installation->quote;
+                $subtotal = $quote->subtotal;
+                $discount = $quote->discount;
+                $taxableValue = $subtotal - $discount;
+                
+                $cgstRate = $quote->tax_rate / 2.0;
+                $cgstAmount = $taxableValue * ($cgstRate / 100);
+                $sgstRate = $quote->tax_rate / 2.0;
+                $sgstAmount = $taxableValue * ($sgstRate / 100);
+                
+                \App\Models\GstInvoice::create([
+                    'company_id'      => $installation->company_id,
+                    'customer_id'     => $installation->customer_id,
+                    'quote_id'        => $quote->id,
+                    'installation_id' => $installation->id,
+                    'invoice_number'  => \App\Models\GstInvoice::generateNumber($installation->company_id),
+                    'invoice_date'    => now(),
+                    'subtotal'        => $subtotal,
+                    'discount'        => $discount,
+                    'taxable_value'   => $taxableValue,
+                    'cgst_rate'       => $cgstRate,
+                    'cgst_amount'     => $cgstAmount,
+                    'sgst_rate'       => $sgstRate,
+                    'sgst_amount'     => $sgstAmount,
+                    'total_gst'       => $cgstAmount + $sgstAmount,
+                    'grand_total'     => $quote->total,
+                    'status'          => 'unpaid',
+                ]);
+            }
+        }
+
+        return redirect()->route('installations.show', $installation)->with('success', 'Milestone updated.');
     }
 
     public function edit(Installation $installation)

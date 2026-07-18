@@ -126,6 +126,53 @@
                             <span style="font-weight: 800;">TOTAL</span>
                             <span style="font-weight: 800; color: var(--primary);">{{ $currentCompany->currency_symbol }}<span x-text="total.toFixed(2)"></span></span>
                         </div>
+                        <div x-show="hasSubsidy" style="display: flex; justify-content: space-between; font-size: 1.25rem; border-top: 1px dashed var(--border); padding-top: 0.5rem; margin-top: 0.5rem;">
+                            <span style="font-weight: 800; color: #10b981;">NET COST</span>
+                            <span style="font-weight: 800; color: #10b981;">{{ $currentCompany->currency_symbol }}<span x-text="netCost.toFixed(2)"></span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subsidy & Payment Milestones -->
+                <div class="card glass-card">
+                    <h4 style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.25rem; text-transform: uppercase;">Solar Subsidy & Milestones</h4>
+                    
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.875rem; font-weight: 600;">
+                            <input type="checkbox" name="has_subsidy" x-model="hasSubsidy">
+                            Apply PM Surya Ghar Subsidy
+                        </label>
+                    </div>
+
+                    <div x-show="hasSubsidy" class="animate-fade" style="margin-bottom: 1.5rem; background: rgba(0,0,0,0.2); padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.8rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem;">
+                            <span>Est. System Capacity:</span>
+                            <span style="font-weight: 700;" x-text="estimatedCapacity.toFixed(2) + ' kW'"></span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem;">
+                            <span>Central Subsidy:</span>
+                            <span style="font-weight: 700; color: #10b981;" x-text="'- ' + '{{ $currentCompany->currency_symbol }}' + estimatedCentralSubsidy.toFixed(2)"></span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>State Subsidy:</span>
+                            <span style="font-weight: 700; color: #10b981;" x-text="'- ' + '{{ $currentCompany->currency_symbol }}' + estimatedStateSubsidy.toFixed(2)"></span>
+                        </div>
+                    </div>
+
+                    <h5 style="font-size: 0.75rem; font-weight: 800; color: var(--text-muted); margin-bottom: 0.75rem; text-transform: uppercase;">Payment Schedule %</h5>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label" style="font-size: 0.65rem;">Advance</label>
+                            <input type="number" name="advance_milestone_pct" class="form-control" value="10">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label" style="font-size: 0.65rem;">Delivery</label>
+                            <input type="number" name="delivery_milestone_pct" class="form-control" value="70">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label" style="font-size: 0.65rem;">Commission</label>
+                            <input type="number" name="commissioning_milestone_pct" class="form-control" value="20">
+                        </div>
                     </div>
                 </div>
 
@@ -154,6 +201,7 @@ document.addEventListener('alpine:init', () => {
         items: [{ product_id: '', description: '', qty: 1, unit_price: 0 }],
         taxRate: {{ old('tax_rate', 0) }},
         discount: {{ old('discount', 0) }},
+        hasSubsidy: false,
         products: {!! $products->mapWithKeys(fn($p) => [$p->id => $p])->toJson() !!},
 
         get subtotal() {
@@ -164,6 +212,40 @@ document.addEventListener('alpine:init', () => {
         },
         get total() {
             return this.subtotal + this.tax - this.discount;
+        },
+        get estimatedCapacity() {
+            let capacity = 0;
+            this.items.forEach(item => {
+                if (item.product_id && this.products[item.product_id] && this.products[item.product_id].category === 'panel') {
+                    capacity += ((this.products[item.product_id].capacity_watts || 0) * item.qty) / 1000.0;
+                }
+            });
+            return capacity;
+        },
+        get estimatedCentralSubsidy() {
+            if (!this.hasSubsidy || this.estimatedCapacity <= 0) return 0;
+            let cap = this.estimatedCapacity;
+            if (cap <= 2) {
+                return cap * 30000;
+            } else {
+                let base = 60000;
+                let extra = Math.min(1.0, cap - 2.0) * 18000;
+                return base + extra;
+            }
+        },
+        get estimatedStateSubsidy() {
+            if (!this.hasSubsidy || this.estimatedCapacity <= 0) return 0;
+            let cap = this.estimatedCapacity;
+            let stateType = '{{ $currentCompany->setting('state_subsidy_type', 'flat') }}';
+            let stateRate = {{ floatval($currentCompany->setting('state_subsidy_rate', 0)) }};
+            if (stateType === 'per_kw') {
+                return cap * stateRate;
+            } else {
+                return stateRate;
+            }
+        },
+        get netCost() {
+            return Math.max(0, this.total - this.estimatedCentralSubsidy - this.estimatedStateSubsidy);
         },
         addItem() {
             this.items.push({ product_id: '', description: '', qty: 1, unit_price: 0 });

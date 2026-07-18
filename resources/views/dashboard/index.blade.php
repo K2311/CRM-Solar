@@ -1,5 +1,5 @@
 <x-app-layout title="Dashboard">
-    <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
         <!-- KPI Cards -->
         <div class="card glass-card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -45,6 +45,101 @@
             <div style="color: var(--text-muted); font-size: 0.875rem;">Service Tickets</div>
         </div>
     </div>
+
+    <!-- Admin/Owner Alerts: Stuck Subsidies -->
+    @if((auth()->user()->role === 'admin' || auth()->user()->role === 'owner') && $stuckSubsidies->isNotEmpty())
+    <div class="card animate-fade" style="border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05); margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 2rem; border-radius: 1.25rem;">
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+            <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(239, 68, 68, 0.1); color: #ef4444; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+            </div>
+            <div>
+                <h4 style="font-weight: 800; font-size: 0.95rem; color: #ef4444; margin: 0 0 0.15rem 0;">Stuck PM Surya Ghar Subsidy Claims</h4>
+                <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0;">{{ $stuckSubsidies->count() }} installations have pending subsidies delayed for over 45 days.</p>
+            </div>
+        </div>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            @foreach($stuckSubsidies->take(3) as $sub)
+                <a href="{{ route('installations.show', $sub) }}" class="btn btn-outline" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;">{{ $sub->customer->name }} ({{ $sub->subsidy_status }})</a>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
+    <!-- Sales Alerts: Today's Followups -->
+    @if(auth()->user()->role === 'sales' && $todayFollowups->isNotEmpty())
+    <div class="card animate-fade" style="margin-bottom: 2rem;">
+        <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 1.25rem; color: var(--primary);"><i class="bi bi-clock-history"></i> Today's Follow-up Actions</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+            @foreach($todayFollowups->take(4) as $lf)
+            <div class="card glass-card" style="padding: 1rem; border-color: rgba(14, 165, 233, 0.2); margin: 0;">
+                <div style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.25rem; color: white;">{{ $lf->customer->name }}</div>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0 0 0.75rem 0; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">Project: {{ $lf->title }}</p>
+                <a href="{{ route('leads.show', $lf) }}" class="btn btn-primary" style="padding: 0.35rem; font-size: 0.75rem; justify-content: center; width: 100%;">View Lead details</a>
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
+    <!-- Field Technician: Active Surveys & Milestones -->
+    @if(auth()->user()->role === 'technician' && ($mySurveys->isNotEmpty() || $myInstallations->isNotEmpty()))
+    <div class="animate-fade" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        @if($mySurveys->isNotEmpty())
+        <div class="card" style="margin: 0;">
+            <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 1.25rem; color: #f59e0b;"><i class="bi bi-geo-alt-fill"></i> Today's Site Surveys</h3>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                @foreach($mySurveys->take(3) as $srv)
+                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 0.75rem 1rem; border-radius: 0.75rem; border: 1px solid var(--border);">
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.85rem; color: white;">{{ $srv->lead->customer->name }}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">Scheduled Date: {{ $srv->survey_date->format('M d, Y') }}</div>
+                    </div>
+                    <a href="{{ route('surveys.show', $srv) }}" class="btn btn-outline" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;">Details</a>
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
+        @if($myInstallations->isNotEmpty())
+        <div class="card" style="margin: 0;">
+            <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 1.25rem; color: var(--primary);"><i class="bi bi-tools"></i> Active Solar Projects</h3>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                @foreach($myInstallations->take(3) as $inst)
+                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 0.75rem 1rem; border-radius: 0.75rem; border: 1px solid var(--border);">
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.85rem; color: white;">{{ $inst->customer->name }}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">Size: {{ $inst->system_size_kw }} kW | Brand: {{ $inst->panel_brand }}</div>
+                    </div>
+                    <a href="{{ route('installations.show', $inst) }}" class="btn btn-outline" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;">Milestones</a>
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+    </div>
+    @endif
+
+    <!-- Accounts: Unpaid Invoices and Pending Collections -->
+    @if(auth()->user()->role === 'accounts' && $pendingInvoices->isNotEmpty())
+    <div class="card animate-fade" style="margin-bottom: 2rem;">
+        <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 1.25rem; color: #ef4444;"><i class="bi bi-cash-stack"></i> Pending Collections & Unpaid GST Invoices</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+            @foreach($pendingInvoices->take(4) as $inv)
+            <div class="card glass-card" style="padding: 1rem; border-color: rgba(239, 68, 68, 0.2); margin: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <span style="font-weight: 800; font-size: 0.8rem; color: white;">{{ $inv->invoice_number }}</span>
+                    <span class="badge" style="background: rgba(239,68,68,0.1); color: #ef4444; border: none; font-size: 0.65rem; padding: 0.15rem 0.4rem;">UNPAID</span>
+                </div>
+                <div style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.25rem; color: white;">{{ $inv->customer->name }}</div>
+                <div style="font-size: 0.95rem; font-weight: 800; color: var(--primary); margin-bottom: 0.75rem;">{{ $currentCompany->currency_symbol }}{{ number_format($inv->grand_total, 2) }}</div>
+                <a href="{{ route('invoices.show', $inv) }}" class="btn btn-outline" style="padding: 0.35rem; font-size: 0.75rem; justify-content: center; width: 100%;">View Invoice</a>
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
 
     <!-- Charts Row -->
     <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
@@ -150,11 +245,11 @@
                 labels: {!! json_encode(array_keys($revenueMonthly)) !!},
                 datasets: [{
                     data: {!! json_encode(array_values($revenueMonthly)) !!},
-                    borderColor: '#0ea5e9',
+                    borderColor: '#10b981',
                     borderWidth: 3,
                     tension: 0.4,
                     fill: true,
-                    backgroundColor: 'rgba(14, 165, 233, 0.1)'
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)'
                 }]
             },
             options: {

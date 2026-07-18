@@ -8,13 +8,13 @@
             </div>
         </div>
 
-        <div class="card" x-data="paymentForm({
+        <div class="card glass-card" x-data="paymentForm({
             customers: {{ $customers->toJson() }},
             quotes: {{ $quotes->toJson() }},
             selectedCustomerId: '{{ old('customer_id', $selectedCustomer->id ?? '') }}',
             selectedQuoteId: '{{ old('quote_id', $selectedQuote->id ?? '') }}'
         })">
-            <form action="{{ route('payments.store') }}" method="POST">
+            <form action="{{ route('payments.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 
                 <div class="form-group">
@@ -71,6 +71,12 @@
                 <div class="form-group">
                     <label class="form-label">Notes</label>
                     <textarea name="notes" class="form-control" rows="3" placeholder="Additional details...">{{ old('notes') }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Receipt File (Optional)</label>
+                    <input type="file" name="receipt_file" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Max size: 10MB. Allowed formats: PDF, JPG, PNG</div>
                 </div>
 
                 <div style="display: flex; gap: 1rem; margin-top: 2rem;">

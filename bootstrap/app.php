@@ -14,6 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'set.active.company' => \App\Http\Middleware\SetActiveCompany::class,
             'can.do' => \App\Http\Middleware\CheckPermission::class,
+            'check.subscription' => \App\Http\Middleware\CheckSubscription::class,
+            'check.plan' => \App\Http\Middleware\CheckPlanLimits::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

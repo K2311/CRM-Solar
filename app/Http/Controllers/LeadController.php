@@ -44,10 +44,15 @@ class LeadController extends Controller
 
     public function store(Request $request)
     {
+        $company = $this->tenantRequired();
+        if ($company->hasReachedLeadLimit()) {
+            return back()->with('error', "Limit reached: Your subscription tier (" . strtoupper($company->plan) . ") allows a maximum of " . $company->plan_details['lead_limit'] . " leads. Please upgrade your plan.");
+        }
+
         $data = $request->validate([
             'customer_id'        => 'required|exists:customers,id',
             'title'              => 'nullable|string|max:255',
-            'stage'              => 'required|in:new,contacted,site_survey,quoted,won,lost',
+            'stage'              => 'required|in:new,contacted,survey_scheduled,quote_sent,negotiation,won,lost,junk',
             'source'             => 'nullable|string|max:100',
             'notes'              => 'nullable|string',
             'expected_close_date'=> 'nullable|date',
@@ -77,7 +82,7 @@ class LeadController extends Controller
         $data = $request->validate([
             'customer_id'        => 'required|exists:customers,id',
             'title'              => 'nullable|string|max:255',
-            'stage'              => 'required|in:new,contacted,site_survey,quoted,won,lost',
+            'stage'              => 'required|in:new,contacted,survey_scheduled,quote_sent,negotiation,won,lost,junk',
             'source'             => 'nullable|string|max:100',
             'notes'              => 'nullable|string',
             'expected_close_date'=> 'nullable|date',
@@ -92,7 +97,7 @@ class LeadController extends Controller
     public function updateStage(Request $request, Lead $lead)
     {
         $data = $request->validate([
-            'stage' => 'required|in:new,contacted,site_survey,quoted,won,lost',
+            'stage' => 'required|in:new,contacted,survey_scheduled,quote_sent,negotiation,won,lost,junk',
         ]);
 
         $oldStage = $lead->stage;

@@ -20,6 +20,7 @@
                     <th>Reference</th>
                     <th>Method</th>
                     <th style="text-align: right;">Amount</th>
+                    <th style="text-align: right; width: 80px;">Receipt</th>
                 </tr>
             </thead>
             <tbody>
@@ -35,11 +36,20 @@
                         <td><span style="font-size: 0.875rem; color: var(--text-muted);">{{ $payment->reference ?? '-' }}</span></td>
                         <td><span class="badge" style="background: rgba(255,255,255,0.1); border: 1px solid var(--border); color: white;">{{ strtoupper($payment->method) }}</span></td>
                         <td style="text-align: right;"><div style="font-weight: 800; color: #10b981;">+{{ number_format($payment->amount, 2) }}</div></td>
+                        <td style="text-align: right;">
+                            @if($payment->receipt_file)
+                                <a href="{{ Storage::url($payment->receipt_file) }}" target="_blank" class="btn btn-outline" style="padding: 0.3rem 0.6rem;" title="View Receipt">
+                                    <i class="bi bi-file-earmark-text"></i>
+                                </a>
+                            @else
+                                <span style="color: var(--text-muted);"><i class="bi bi-dash"></i></span>
+                            @endif
+                        </td>
                     </tr>
                     @endforeach
                 @else
                     <tr>
-                        <td colspan="5" style="text-align: center; padding: 3rem; color: var(--text-muted);">No payments recorded yet.</td>
+                        <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">No payments recorded yet.</td>
                     </tr>
                 @endif
             </tbody>

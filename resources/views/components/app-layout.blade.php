@@ -17,12 +17,21 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body>
-    <div class="app-container">
+    <div class="app-container" x-data="{ mobileMenuOpen: false }">
+        <!-- Mobile Sidebar Overlay -->
+        <div class="sidebar-overlay" x-show="mobileMenuOpen" @click="mobileMenuOpen = false" x-transition style="display: none;"></div>
+
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" :class="mobileMenuOpen ? 'sidebar-open' : ''">
             <div class="sidebar-header">
-                <div class="logo-circle">S</div>
-                <div class="app-name">Solar CRM</div>
+                @if(isset($currentCompany) && $currentCompany->logo)
+                    <img src="{{ Storage::url($currentCompany->logo) }}" alt="Logo" style="width: 32px; height: 32px; object-fit: contain; border-radius: 4px;">
+                @else
+                    <div class="logo-circle">{{ isset($currentCompany) ? substr($currentCompany->name, 0, 1) : 'S' }}</div>
+                @endif
+                <div class="app-name" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ $currentCompany->name ?? 'Solar CRM' }}">
+                    {{ $currentCompany->name ?? 'Solar CRM' }}
+                </div>
             </div>
 
             <nav class="sidebar-nav">
@@ -70,6 +79,9 @@
                 <a href="{{ route('payments.index') }}" class="nav-item {{ request()->routeIs('payments.*') ? 'active' : '' }}">
                     <i class="bi bi-currency-dollar"></i> Payments
                 </a>
+                <a href="{{ route('invoices.index') }}" class="nav-item {{ request()->routeIs('invoices.*') ? 'active' : '' }}">
+                    <i class="bi bi-receipt"></i> Invoices
+                </a>
                 @endif
 
                 @if(auth()->user()->canDo('marketing.view'))
@@ -94,6 +106,12 @@
                 </a>
                 @endif
 
+                @if(auth()->user()->role === 'owner' || auth()->user()->role === 'admin')
+                <a href="{{ route('billing.index') }}" class="nav-item {{ request()->routeIs('billing.*') ? 'active' : '' }}">
+                    <i class="bi bi-credit-card"></i> Subscription & Billing
+                </a>
+                @endif
+
                 @if(auth()->user()->canDo('team.view'))
                 <a href="{{ route('team.index') }}" class="nav-item {{ request()->routeIs('team.*') ? 'active' : '' }}">
                     <i class="bi bi-person-badge"></i> Team & Roles
@@ -101,8 +119,18 @@
                 @endif
 
                 @if(auth()->user()->is_super_admin)
-                <a href="{{ route('admin.companies') }}" class="nav-item {{ request()->routeIs('admin.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.companies') }}" class="nav-item {{ request()->routeIs('admin.companies') ? 'active' : '' }}">
                     <i class="bi bi-building"></i> Companies
+                </a>
+                <a href="{{ route('admin.plans.index') }}" class="nav-item {{ request()->routeIs('admin.plans.*') ? 'active' : '' }}">
+                    <i class="bi bi-card-list"></i> Manage Plans
+                </a>
+                @php $pendingCount = \App\Models\PlanUpgradeRequest::where('status', 'pending')->count(); @endphp
+                <a href="{{ route('admin.upgrade-requests') }}" class="nav-item {{ request()->routeIs('admin.upgrade-requests') ? 'active' : '' }}">
+                    <i class="bi bi-arrow-up-circle"></i> Upgrade Requests
+                    @if($pendingCount > 0)
+                        <span style="background: #ef4444; color: white; font-size: 0.65rem; padding: 0.1rem 0.4rem; border-radius: 999px; font-weight: 700; margin-left: auto;">{{ $pendingCount }}</span>
+                    @endif
                 </a>
                 @endif
             </nav>
@@ -120,7 +148,11 @@
         <!-- Main Content -->
         <main class="main-content">
             <header class="navbar">
-                <div class="navbar-left">
+                <div class="navbar-left" style="display: flex; align-items: center; gap: 1rem;">
+                    <!-- Hamburger menu toggle button for mobile -->
+                    <button class="mobile-menu-toggle" @click="mobileMenuOpen = !mobileMenuOpen" style="background: transparent; border: none; color: white; font-size: 1.5rem; display: none; cursor: pointer; padding: 0.25rem;">
+                        <i class="bi bi-list"></i>
+                    </button>
                     <h2 style="font-size: 1.1rem; font-weight: 600;">{{ $title ?? 'Dashboard' }}</h2>
                 </div>
                 <div class="navbar-right" style="display: flex; align-items: center; gap: 1.5rem;">
@@ -134,7 +166,7 @@
                     <div class="user-badge" style="display: flex; align-items: center; gap: 0.75rem;">
                         <div class="text-right">
                             <div style="font-size: 0.875rem; font-weight: 600;">{{ auth()->user()->name }}</div>
-                            <div style="font-size: 0.75rem; color: var(--text-muted);">{{ auth()->user()->company->name ?? 'System' }}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">{{ $currentCompany->name ?? 'System' }}</div>
                         </div>
                         <img src="{{ auth()->user()->avatar_url }}" alt="AV" style="width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--primary);">
                     </div>
@@ -150,10 +182,10 @@
     <script>
     // ── SweetAlert2 global config ──────────────────────────────────────────
     const CrmSwal = Swal.mixin({
-        background: '#1e293b',
-        color: '#f1f5f9',
-        confirmButtonColor: '#0ea5e9',
-        cancelButtonColor: '#475569',
+        background: '#ffffff',
+        color: '#0f172a',
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#94a3b8',
         customClass: { popup: 'swal-crm-popup' }
     });
 

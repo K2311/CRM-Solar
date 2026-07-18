@@ -46,10 +46,15 @@ class PaymentController extends Controller
             'reference'    => 'nullable|string|max:255',
             'payment_date' => 'required|date',
             'notes'        => 'nullable|string',
+            'receipt_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
 
         $company = $this->tenantRequired();
         $data['company_id'] = $company->id;
+
+        if ($request->hasFile('receipt_file')) {
+            $data['receipt_file'] = $request->file('receipt_file')->store('receipts', 'public');
+        }
 
         Payment::create($data);
 

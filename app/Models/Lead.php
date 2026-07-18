@@ -23,21 +23,24 @@ class Lead extends Model
     public function quotes() { return $this->hasMany(Quote::class); }
     public function installation() { return $this->hasOne(Installation::class); }
     public function activities() { return $this->morphMany(Activity::class, 'subject'); }
+    public function siteSurvey() { return $this->hasOne(SiteSurvey::class); }
 
     public static function stages(): array
     {
-        return ['new', 'contacted', 'site_survey', 'quoted', 'won', 'lost'];
+        return ['new', 'contacted', 'survey_scheduled', 'quote_sent', 'negotiation', 'won', 'lost', 'junk'];
     }
 
     public static function stageColors(): array
     {
         return [
-            'new'         => '#6366f1',
-            'contacted'   => '#3b82f6',
-            'site_survey' => '#f59e0b',
-            'quoted'      => '#8b5cf6',
-            'won'         => '#10b981',
-            'lost'        => '#ef4444',
+            'new'              => '#6366f1',
+            'contacted'        => '#3b82f6',
+            'survey_scheduled' => '#f59e0b',
+            'quote_sent'       => '#8b5cf6',
+            'negotiation'      => '#ec4899',
+            'won'              => '#10b981',
+            'lost'             => '#ef4444',
+            'junk'             => '#6b7280',
         ];
     }
 }

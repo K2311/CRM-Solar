@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     <style>
         body {
-            background: radial-gradient(circle at bottom left, #1e1b4b, #0f172a);
+            background: radial-gradient(circle at bottom left, #e2e8f0, #f8fafc);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -23,7 +23,7 @@
 <body>
     <div class="card glass-card animate-fade" style="width: 100%; max-width: 500px; padding: 2.5rem;">
         <div style="text-align: center; margin-bottom: 2rem;">
-            <h1 style="font-size: 1.5rem; font-weight: 800; color: white;">Register Your Company</h1>
+            <h1 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main);">Register Your Company</h1>
             <p style="color: var(--text-muted); font-size: 0.875rem;">Set up your team in minutes</p>
         </div>
 

@@ -10,7 +10,7 @@ class Payment extends Model
     use HasFactory, HasCompanyScope;
 
     protected $fillable = [
-        'company_id', 'customer_id', 'quote_id', 'amount', 'method', 'reference', 'payment_date', 'notes',
+        'company_id', 'customer_id', 'quote_id', 'amount', 'method', 'reference', 'payment_date', 'notes', 'receipt_file'
     ];
 
     protected $casts = ['payment_date' => 'date', 'amount' => 'decimal:2'];

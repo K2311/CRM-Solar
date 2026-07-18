@@ -7,10 +7,12 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
+use Illuminate\Auth\Passwords\CanResetPassword;
 
-class User extends Authenticatable
+class User extends Authenticatable implements CanResetPasswordContract
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, CanResetPassword;
 
     protected $fillable = [
         'name', 'email', 'password', 'company_id', 'role',
@@ -55,6 +57,6 @@ class User extends Authenticatable
     {
         if ($this->avatar) return asset('storage/' . $this->avatar);
         $name = urlencode($this->name);
-        return "https://ui-avatars.com/api/?name={$name}&background=0ea5e9&color=fff&size=80";
+        return "https://ui-avatars.com/api/?name={$name}&background=10b981&color=fff&size=80";
     }
 }

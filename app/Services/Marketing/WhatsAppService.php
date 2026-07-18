@@ -3,31 +3,79 @@
 namespace App\Services\Marketing;
 
 use App\Models\Company;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Twilio\Rest\Client;
 
 class WhatsAppService
 {
-    public function send(Company $company, string $to, string $message): bool
+    /**
+     * Send a template or text message via direct Meta WhatsApp Cloud API.
+     */
+    public function send(Company $company, string $to, string $body, string $templateName = null, array $templateParams = []): bool
     {
-        $sid   = $company->setting('twilio_sid');
-        $token = $company->setting('twilio_token');
-        $from  = $company->setting('twilio_whatsapp_from', 'whatsapp:+14155238886');
+        $accessToken = $company->setting('whatsapp_access_token');
+        $phoneId     = $company->setting('whatsapp_phone_number_id');
 
-        if (!$sid || !$token) {
-            Log::warning("WhatsApp not sent — Twilio credentials missing for company {$company->id}");
+        if (!$accessToken || !$phoneId) {
+            Log::warning("WhatsApp Cloud API message not sent - Credentials missing for company {$company->id}");
             return false;
         }
 
+        // Clean phone number (needs country code, no +, no spaces)
+        $cleanPhone = preg_replace('/[^0-9]/', '', $to);
+
+        $url = "https://graph.facebook.com/v19.0/{$phoneId}/messages";
+
+        if ($templateName) {
+            $parameters = [];
+            foreach ($templateParams as $param) {
+                $parameters[] = [
+                    'type' => 'text',
+                    'text' => $param,
+                ];
+            }
+
+            $payload = [
+                'messaging_product' => 'whatsapp',
+                'to' => $cleanPhone,
+                'type' => 'template',
+                'template' => [
+                    'name' => $templateName,
+                    'language' => [
+                        'code' => 'en_US',
+                    ],
+                    'components' => [
+                        [
+                            'type' => 'body',
+                            'parameters' => $parameters,
+                        ]
+                    ]
+                ]
+            ];
+        } else {
+            $payload = [
+                'messaging_product' => 'whatsapp',
+                'to' => $cleanPhone,
+                'type' => 'text',
+                'text' => [
+                    'body' => $body,
+                ]
+            ];
+        }
+
         try {
-            $client = new Client($sid, $token);
-            $client->messages->create('whatsapp:' . $to, [
-                'from' => $from,
-                'body' => $message,
-            ]);
-            return true;
+            $response = Http::withToken($accessToken)
+                ->post($url, $payload);
+
+            if ($response->successful()) {
+                Log::info("WhatsApp Cloud API message successfully sent to {$to} (Company: {$company->id})");
+                return true;
+            }
+
+            Log::error("WhatsApp Cloud API send failed: " . $response->body());
+            return false;
         } catch (\Exception $e) {
-            Log::error("WhatsApp send failed: " . $e->getMessage());
+            Log::error("WhatsApp Cloud API exception: " . $e->getMessage());
             return false;
         }
     }

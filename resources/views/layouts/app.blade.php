@@ -23,8 +23,14 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <div class="logo-circle">S</div>
-                <div class="app-name">Solar CRM</div>
+                @if(isset($currentCompany) && $currentCompany->logo)
+                    <img src="{{ Storage::url($currentCompany->logo) }}" alt="Logo" style="width: 32px; height: 32px; object-fit: contain; border-radius: 4px;">
+                @else
+                    <div class="logo-circle">{{ isset($currentCompany) ? substr($currentCompany->name, 0, 1) : 'S' }}</div>
+                @endif
+                <div class="app-name" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ $currentCompany->name ?? 'Solar CRM' }}">
+                    {{ $currentCompany->name ?? 'Solar CRM' }}
+                </div>
             </div>
 
             <nav class="sidebar-nav">
@@ -152,7 +158,7 @@
                         <div class="text-right">
                             <div style="font-size: 0.875rem; font-weight: 600;">{{ auth()->user()->name }}</div>
                             <div style="font-size: 0.75rem; color: var(--text-muted);">
-                                {{ optional(auth()->user()->company)->name ?? 'System' }}</div>
+                                {{ $currentCompany->name ?? 'System' }}</div>
                         </div>
                         <img src="{{ auth()->user()->avatar_url }}" alt="AV"
                             style="width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--primary);">
@@ -169,10 +175,10 @@
     <script>
         // ── SweetAlert2 global config ──────────────────────────────────────────
         const CrmSwal = Swal.mixin({
-            background: '#1e293b',
-            color: '#f1f5f9',
-            confirmButtonColor: '#0ea5e9',
-            cancelButtonColor: '#475569',
+            background: '#ffffff',
+            color: '#0f172a',
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#94a3b8',
             customClass: { popup: 'swal-crm-popup' }
         });
 

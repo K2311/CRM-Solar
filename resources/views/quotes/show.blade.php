@@ -124,6 +124,39 @@
                     <span style="font-weight: 800;">TOTAL</span>
                     <span style="font-weight: 800; color: var(--primary);">{{ $currentCompany->currency_symbol }}{{ number_format($quote->total, 2) }}</span>
                 </div>
+                @if($quote->has_subsidy)
+                <div style="display: flex; justify-content: space-between; color: #10b981; margin-top: 0.5rem;">
+                    <span style="font-weight: 700; text-transform: uppercase; font-size: 0.75rem;">Central Subsidy</span>
+                    <span style="font-weight: 600;">-{{ $currentCompany->currency_symbol }}{{ number_format($quote->central_subsidy, 2) }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; color: #10b981; margin-top: 0.25rem;">
+                    <span style="font-weight: 700; text-transform: uppercase; font-size: 0.75rem;">State Subsidy</span>
+                    <span style="font-weight: 600;">-{{ $currentCompany->currency_symbol }}{{ number_format($quote->state_subsidy, 2) }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding-top: 1rem; border-top: 2px dashed #eee; font-size: 1.5rem; color: #10b981; margin-top: 0.5rem;">
+                    <span style="font-weight: 800;">NET COST</span>
+                    <span style="font-weight: 800;">{{ $currentCompany->currency_symbol }}{{ number_format($quote->net_cost, 2) }}</span>
+                </div>
+                @endif
+            </div>
+        </div>
+
+        <!-- Payment Schedule -->
+        <div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid #eee;">
+            <h4 style="color: #999; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 1rem;">Payment Milestone Schedule</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem; background: #f9fafb; padding: 1.5rem; border-radius: 0.75rem;">
+                <div>
+                    <span style="color: #666; font-size: 0.8rem; display: block; margin-bottom: 0.25rem;">1. Booking Advance ({{ number_format($quote->advance_milestone_pct) }}%)</span>
+                    <span style="font-size: 1.1rem; font-weight: 700;">{{ $currentCompany->currency_symbol }}{{ number_format(($quote->has_subsidy ? $quote->net_cost : $quote->total) * ($quote->advance_milestone_pct / 100), 2) }}</span>
+                </div>
+                <div>
+                    <span style="color: #666; font-size: 0.8rem; display: block; margin-bottom: 0.25rem;">2. Material Delivery ({{ number_format($quote->delivery_milestone_pct) }}%)</span>
+                    <span style="font-size: 1.1rem; font-weight: 700;">{{ $currentCompany->currency_symbol }}{{ number_format(($quote->has_subsidy ? $quote->net_cost : $quote->total) * ($quote->delivery_milestone_pct / 100), 2) }}</span>
+                </div>
+                <div>
+                    <span style="color: #666; font-size: 0.8rem; display: block; margin-bottom: 0.25rem;">3. Commissioning ({{ number_format($quote->commissioning_milestone_pct) }}%)</span>
+                    <span style="font-size: 1.1rem; font-weight: 700;">{{ $currentCompany->currency_symbol }}{{ number_format(($quote->has_subsidy ? $quote->net_cost : $quote->total) * ($quote->commissioning_milestone_pct / 100), 2) }}</span>
+                </div>
             </div>
         </div>
 

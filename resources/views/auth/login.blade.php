@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     <style>
         body {
-            background: radial-gradient(circle at top right, #1e1b4b, #0f172a);
+            background: radial-gradient(circle at top right, #e2e8f0, #f8fafc);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -23,7 +23,7 @@
     <div class="card glass-card animate-fade" style="width: 100%; max-width: 400px; padding: 2.5rem;">
         <div style="text-align: center; margin-bottom: 2rem;">
             <div class="logo-circle" style="margin: 0 auto 1rem; width: 60px; height: 60px; font-size: 1.5rem;">S</div>
-            <h1 style="font-size: 1.5rem; font-weight: 800; color: white;">Welcome Back</h1>
+            <h1 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main);">Welcome Back</h1>
             <p style="color: var(--text-muted); font-size: 0.875rem;">Login to your Solar CRM account</p>
         </div>
 
@@ -47,7 +47,7 @@
                 <label style="font-size: 0.875rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
                     <input type="checkbox" name="remember"> Remember me
                 </label>
-                <a href="#" style="font-size: 0.875rem; color: var(--primary);">Forgot password?</a>
+                <a href="{{ route('password.request') }}" style="font-size: 0.875rem; color: var(--primary);">Forgot password?</a>
             </div>
             <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 0.8rem;">
                 Sign In <i class="bi bi-arrow-right"></i>

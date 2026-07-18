@@ -23,8 +23,8 @@
                             <label class="form-label">Channel</label>
                             <select name="channel" class="form-control" x-model="channel" required>
                                 <option value="email">Email</option>
-                                <option value="sms">SMS (Twilio)</option>
                                 <option value="whatsapp">WhatsApp</option>
+                                <option value="sms">SMS (WhatsApp Text)</option>
                                 <option value="facebook">Facebook Post</option>
                                 <option value="instagram">Instagram Post</option>
                             </select>

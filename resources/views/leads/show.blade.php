@@ -51,7 +51,7 @@
                             </div>
                             <div style="display: flex; justify-content: space-between;">
                                 <span style="color: var(--text-muted);">Estimated Value</span>
-                                <span style="font-weight: 800; color: var(--primary);">${{ number_format($lead->value, 2) }}</span>
+                                <span style="font-weight: 800; color: var(--primary);">{{ $currentCompany->currency_symbol }}{{ number_format($lead->value, 2) }}</span>
                             </div>
                             <div style="display: flex; justify-content: space-between;">
                                 <span style="color: var(--text-muted);">Close Probability</span>
@@ -92,7 +92,7 @@
                         @forelse($lead->quotes as $quote)
                         <tr>
                             <td style="font-weight: 600;">#{{ $quote->quote_number }}</td>
-                            <td style="font-weight: 700; color: var(--primary);">${{ number_format($quote->total, 2) }}</td>
+                            <td style="font-weight: 700; color: var(--primary);">{{ $currentCompany->currency_symbol }}{{ number_format($quote->total, 2) }}</td>
                             <td><span class="badge">{{ $quote->status }}</span></td>
                             <td style="text-align: right;">
                                 <a href="{{ route('quotes.show', $quote) }}" class="btn btn-outline" style="padding: 0.4rem;"><i class="bi bi-eye"></i></a>
@@ -103,6 +103,49 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Site Survey Card -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h4 style="font-size: 1rem; font-weight: 700;">Site Survey Report</h4>
+                    @if($lead->siteSurvey)
+                        <a href="{{ route('surveys.show', $lead->siteSurvey) }}" class="btn btn-outline" style="padding: 0.4rem 1rem; font-size: 0.8rem;"><i class="bi bi-eye"></i> View Full Report</a>
+                    @else
+                        <a href="{{ route('surveys.create', ['lead_id' => $lead->id]) }}" class="btn btn-outline" style="padding: 0.4rem 1rem; font-size: 0.8rem; border-style: dashed;"><i class="bi bi-geo-alt-fill"></i> Record Survey</a>
+                    @endif
+                </div>
+
+                @if($lead->siteSurvey)
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; font-size: 0.85rem;">
+                        <div>
+                            <span style="color: var(--text-muted); display: block;">Roof Area</span>
+                            <span style="font-weight: 600;">{{ number_format($lead->siteSurvey->roof_area_sqft) }} Sq. Ft.</span>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-muted); display: block;">Roof Type</span>
+                            <span style="font-weight: 600; text-transform: capitalize;">{{ str_replace('_', ' ', $lead->siteSurvey->roof_type) }}</span>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-muted); display: block;">Shading Obstruction</span>
+                            <span style="font-weight: 600; text-transform: capitalize;">{{ $lead->siteSurvey->shading_details }}</span>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-muted); display: block;">DISCOM Connection</span>
+                            <span style="font-weight: 600;">{{ $lead->siteSurvey->discom_name }}</span>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-muted); display: block;">Sanctioned Load</span>
+                            <span style="font-weight: 600;">{{ $lead->siteSurvey->sanctioned_load_kw }} kW</span>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-muted); display: block;">Consumer Number</span>
+                            <span style="font-weight: 600; font-family: monospace;">{{ $lead->siteSurvey->consumer_number }}</span>
+                        </div>
+                    </div>
+                @else
+                    <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1.5rem 0;">No site survey captured for this lead yet.</p>
+                @endif
             </div>
 
             <!-- Activity Log -->
@@ -133,6 +176,7 @@
             <div class="card">
                 <h4 style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem; text-transform: uppercase;">Quick Actions</h4>
                 <div style="display: flex; flex-direction: column; gap: 0.75rem;" x-data>
+                    <a href="{{ route('surveys.create', ['lead_id' => $lead->id]) }}" class="btn btn-outline" style="width: 100%; justify-content: flex-start;"><i class="bi bi-geo-alt"></i> Record Site Survey</a>
                     <button class="btn btn-outline" style="width: 100%; justify-content: flex-start;" @click="$dispatch('open-activity-modal', {type: 'call'})"><i class="bi bi-telephone"></i> Log Call</button>
                     <button class="btn btn-outline" style="width: 100%; justify-content: flex-start;" @click="$dispatch('open-activity-modal', {type: 'email'})"><i class="bi bi-envelope"></i> Send Email</button>
                     <button class="btn btn-outline" style="width: 100%; justify-content: flex-start;" @click="$dispatch('open-activity-modal', {type: 'meeting'})"><i class="bi bi-calendar-check"></i> Set Site Survey</button>

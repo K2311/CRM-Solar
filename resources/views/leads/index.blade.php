@@ -80,7 +80,7 @@
                             </span>
                         </td>
                         <td>
-                            <div style="font-weight: 800; font-size: 1rem; color: white;">${{ number_format($lead->value, 2) }}</div>
+                            <div style="font-weight: 800; font-size: 1rem; color: white;">{{ $currentCompany->currency_symbol }}{{ number_format($lead->value, 2) }}</div>
                         </td>
                         <td>
                             <div style="display: flex; align-items: center; gap: 0.75rem;">

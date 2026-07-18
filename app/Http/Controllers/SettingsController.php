@@ -45,6 +45,11 @@ class SettingsController extends Controller
         if ($request->hasFile('logo')) {
             $path = $request->file('logo')->store('logos', 'public');
             $company->update(['logo' => $path]);
+        } elseif ($request->input('remove_logo') === '1') {
+            if ($company->logo) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($company->logo);
+            }
+            $company->update(['logo' => null]);
         }
 
         if (isset($data['settings'])) {

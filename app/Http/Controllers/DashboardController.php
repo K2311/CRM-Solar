@@ -17,22 +17,23 @@ class DashboardController extends Controller
     public function index()
     {
         $company = $this->tenantRequired();
+        $user = auth()->user();
 
-        // KPIs
-        $totalCustomers    = Customer::count();
-        $activeLeads       = Lead::whereNotIn('stage', ['won', 'lost'])->count();
-        $totalRevenue      = Payment::sum('amount');
-        $openTickets       = ServiceTicket::whereIn('status', ['open', 'in_progress'])->count();
-        $wonLeads          = Lead::where('stage', 'won')->count();
-        $totalLeads        = Lead::count();
-        $recentInstalls    = Installation::where('status', 'completed')->count();
+        // 1. Generic metrics (used across dashboards)
+        $totalCustomers    = \App\Models\Customer::count();
+        $activeLeads       = \App\Models\Lead::whereNotIn('stage', ['won', 'lost', 'junk'])->count();
+        $totalRevenue      = \App\Models\Payment::sum('amount');
+        $openTickets       = \App\Models\ServiceTicket::whereIn('status', ['open', 'in_progress'])->count();
+        $wonLeads          = \App\Models\Lead::where('stage', 'won')->count();
+        $totalLeads        = \App\Models\Lead::count();
+        $recentInstalls    = \App\Models\Installation::where('status', 'completed')->count();
 
-        // Chart: Leads by stage
-        $leadsByStage = Lead::select('stage', DB::raw('count(*) as count'))
+        // Lead by stage chart
+        $leadsByStage = \App\Models\Lead::select('stage', DB::raw('count(*) as count'))
             ->groupBy('stage')->pluck('count', 'stage')->toArray();
 
-        // Chart: Revenue last 6 months
-        $revenueMonthly = Payment::select(
+        // Revenue chart
+        $revenueMonthly = \App\Models\Payment::select(
                 DB::raw("strftime('%Y-%m', payment_date) as month"),
                 DB::raw('sum(amount) as total')
             )
@@ -41,21 +42,66 @@ class DashboardController extends Controller
             ->orderBy('month')
             ->pluck('total', 'month')->toArray();
 
-        // Chart: Tickets by priority
-        $ticketsByPriority = ServiceTicket::select('priority', DB::raw('count(*) as count'))
-            ->groupBy('priority')->pluck('count', 'priority')->toArray();
+        // 2. Role-specific queries
+        $stuckSubsidies = collect();
+        $todayFollowups = collect();
+        $mySurveys      = collect();
+        $myInstallations = collect();
+        $pendingInvoices = collect();
 
-        // Recent activities
-        $recentCustomers = Customer::latest()->limit(5)->get();
-        $recentLeads     = Lead::with('customer')->latest()->limit(5)->get();
-        $upcomingInstallations = Installation::where('status', 'scheduled')
+        if ($user->role === 'admin' || $user->role === 'owner') {
+            // Stuck subsidies: registered / docs_submitted / approved for > 45 days
+            $stuckSubsidies = \App\Models\Installation::whereIn('subsidy_status', ['registered', 'docs_submitted', 'approved'])
+                ->where(function($q) {
+                    $q->where('last_status_change_at', '<=', now()->subDays(45))
+                      ->orWhereNull('last_status_change_at');
+                })
+                ->with('customer')
+                ->get();
+        }
+
+        if ($user->role === 'sales' || $user->role === 'admin' || $user->role === 'owner') {
+            // Today's/Past expected close follow-ups
+            $todayFollowups = \App\Models\Lead::whereDate('expected_close_date', '<=', now()->toDateString())
+                ->whereNotIn('stage', ['won', 'lost', 'junk'])
+                ->with('customer')
+                ->latest()
+                ->get();
+        }
+
+        if ($user->role === 'technician' || $user->role === 'admin' || $user->role === 'owner') {
+            // Assigned surveys
+            $mySurveys = \App\Models\SiteSurvey::where('technician_id', $user->id)
+                ->whereDate('survey_date', '>=', now()->toDateString())
+                ->with('lead.customer')
+                ->get();
+
+            // Assigned active installations
+            $myInstallations = \App\Models\Installation::where('assigned_user_id', $user->id)
+                ->whereIn('status', ['scheduled', 'in_progress'])
+                ->with('customer')
+                ->get();
+        }
+
+        if ($user->role === 'accounts' || $user->role === 'admin' || $user->role === 'owner') {
+            // Unpaid invoices
+            $pendingInvoices = \App\Models\GstInvoice::where('status', 'unpaid')
+                ->with('customer')
+                ->get();
+        }
+
+        // Recent generic items
+        $recentCustomers = \App\Models\Customer::latest()->limit(5)->get();
+        $recentLeads     = \App\Models\Lead::with('customer')->latest()->limit(5)->get();
+        $upcomingInstallations = \App\Models\Installation::where('status', 'scheduled')
             ->orderBy('scheduled_date')->limit(5)->get();
 
         return view('dashboard.index', compact(
             'company', 'totalCustomers', 'activeLeads', 'totalRevenue',
             'openTickets', 'wonLeads', 'totalLeads', 'recentInstalls',
-            'leadsByStage', 'revenueMonthly', 'ticketsByPriority',
-            'recentCustomers', 'recentLeads', 'upcomingInstallations'
+            'leadsByStage', 'revenueMonthly', 'recentCustomers', 'recentLeads',
+            'upcomingInstallations', 'stuckSubsidies', 'todayFollowups',
+            'mySurveys', 'myInstallations', 'pendingInvoices'
         ));
     }
 }

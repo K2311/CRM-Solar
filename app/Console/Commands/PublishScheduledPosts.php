@@ -29,9 +29,14 @@ class PublishScheduledPosts extends Command
      */
     public function handle(SocialMediaService $socialMediaService)
     {
-        $posts = SocialPost::where('status', 'scheduled')
-            ->where('scheduled_at', '<=', now())
-            ->get();
+        $allPosts = SocialPost::with('company')->where('status', 'scheduled')->get();
+
+        $posts = $allPosts->filter(function ($post) {
+            $companyTimezone = $post->company->timezone ?? 'UTC';
+            $companyNowStr = now()->timezone($companyTimezone)->format('Y-m-d H:i:s');
+            // Compare the database string (local time of company) against the company's current local time
+            return $post->scheduled_at->format('Y-m-d H:i:s') <= $companyNowStr;
+        });
 
         foreach ($posts as $post) {
             $account = SocialAccount::where('company_id', $post->company_id)->first();
