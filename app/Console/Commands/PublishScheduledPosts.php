@@ -39,6 +39,15 @@ class PublishScheduledPosts extends Command
         });
 
         foreach ($posts as $post) {
+            // Atomically reserve the post to prevent duplicate publishing
+            $updated = SocialPost::where('id', $post->id)
+                ->where('status', 'scheduled')
+                ->update(['status' => 'publishing']);
+
+            if (!$updated) {
+                continue; // Picked up by another worker
+            }
+
             $account = SocialAccount::where('company_id', $post->company_id)->first();
             if (!$account) {
                 $post->update(['status' => 'failed', 'error_message' => 'No social account connected.']);

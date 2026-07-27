@@ -20,14 +20,16 @@ class SubsidyCalculationService
         }
 
         // 1. Central Subsidy Calculation
-        // Capped at 3kW (max ₹78,000)
-        // Up to 2 kW: ₹30,000 / kW
-        // Additional kW up to 3 kW: ₹18,000 / kW
-        if ($kw <= 2) {
-            $central = $kw * 30000.0;
+        $tier1Kw = floatval($company->setting('central_subsidy_tier1_max_kw', 2));
+        $tier1Rate = floatval($company->setting('central_subsidy_tier1_rate', 30000));
+        $tier2Kw = floatval($company->setting('central_subsidy_tier2_max_kw', 3));
+        $tier2Rate = floatval($company->setting('central_subsidy_tier2_rate', 18000));
+
+        if ($kw <= $tier1Kw) {
+            $central = $kw * $tier1Rate;
         } else {
-            $base = 60000.0;
-            $extra = min(1.0, $kw - 2.0) * 18000.0;
+            $base = $tier1Kw * $tier1Rate;
+            $extra = min(max(0, $tier2Kw - $tier1Kw), $kw - $tier1Kw) * $tier2Rate;
             $central = $base + $extra;
         }
 

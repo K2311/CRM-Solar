@@ -18,7 +18,7 @@
                     <input type="hidden" name="lead_id" value="{{ $lead->id }}">
                     <div style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.2); border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1.5rem;">
                         <h4 style="font-size: 0.9rem; font-weight: 700; color: var(--primary); margin-bottom: 0.25rem;">Customer Details (Pre-filled from Lead)</h4>
-                        <p style="font-size: 0.85rem; color: white;"><b>Name:</b> {{ $lead->customer->name }} | <b>Phone:</b> {{ $lead->customer->phone ?? 'N/A' }} | <b>Email:</b> {{ $lead->customer->email ?? 'N/A' }}</p>
+                        <p style="font-size: 0.85rem; color: var(--text-main);"><b>Name:</b> {{ $lead->customer->name }} | <b>Phone:</b> {{ $lead->customer->phone ?? 'N/A' }} | <b>Email:</b> {{ $lead->customer->email ?? 'N/A' }}</p>
                     </div>
                 @else
                     <div class="form-group" style="margin-bottom: 1.5rem;">

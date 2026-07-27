@@ -37,20 +37,20 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-group">
                             <label class="form-label">Customer</label>
-                            <select name="customer_id" class="form-control" required>
+                            <select name="customer_id" class="form-control" required x-model="customerId">
                                 <option value="">Select Customer</option>
                                 @foreach($customers as $c)
-                                <option value="{{ $c->id }}" {{ old('customer_id', $lead ? $lead->customer_id : '') == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
+                                <option value="{{ $c->id }}">{{ $c->name }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Related Lead (Optional)</label>
-                            <select name="lead_id" class="form-control">
+                            <select name="lead_id" class="form-control" x-model="leadId">
                                 <option value="">No Direct Lead</option>
-                                @foreach($leads as $l)
-                                <option value="{{ $l->id }}" {{ old('lead_id', $lead ? $lead->id : '') == $l->id ? 'selected' : '' }}>{{ $l->title }} ({{ $l->customer->name }})</option>
-                                @endforeach
+                                <template x-for="l in filteredLeads" :key="l.id">
+                                    <option :value="l.id" x-text="l.title + ' (' + l.customer.name + ')'"></option>
+                                </template>
                             </select>
                         </div>
                     </div>
@@ -198,11 +198,28 @@
 <script>
 document.addEventListener('alpine:init', () => {
     Alpine.data('quoteForm', () => ({
+        customerId: '{{ old('customer_id', $lead ? $lead->customer_id : '') }}',
+        leadId: '{{ old('lead_id', $lead ? $lead->id : '') }}',
+        allLeads: @json($leads),
         items: [{ product_id: '', description: '', qty: 1, unit_price: 0 }],
         taxRate: {{ old('tax_rate', 0) }},
         discount: {{ old('discount', 0) }},
         hasSubsidy: false,
-        products: {!! $products->mapWithKeys(fn($p) => [$p->id => $p])->toJson() !!},
+        products: @json($products->mapWithKeys(fn($p) => [$p->id => $p])),
+
+        get filteredLeads() {
+            if (!this.customerId) return [];
+            return this.allLeads.filter(l => l.customer_id == this.customerId);
+        },
+        init() {
+            this.$watch('customerId', (val) => {
+                // If the currently selected lead doesn't belong to the new customer, clear it
+                let currentLead = this.allLeads.find(l => l.id == this.leadId);
+                if (currentLead && currentLead.customer_id != val) {
+                    this.leadId = '';
+                }
+            });
+        },
 
         get subtotal() {
             return this.items.reduce((acc, item) => acc + (item.qty * item.unit_price), 0);
@@ -225,11 +242,17 @@ document.addEventListener('alpine:init', () => {
         get estimatedCentralSubsidy() {
             if (!this.hasSubsidy || this.estimatedCapacity <= 0) return 0;
             let cap = this.estimatedCapacity;
-            if (cap <= 2) {
-                return cap * 30000;
+            
+            let tier1Kw = {{ floatval($currentCompany->setting('central_subsidy_tier1_max_kw', 2)) }};
+            let tier1Rate = {{ floatval($currentCompany->setting('central_subsidy_tier1_rate', 30000)) }};
+            let tier2Kw = {{ floatval($currentCompany->setting('central_subsidy_tier2_max_kw', 3)) }};
+            let tier2Rate = {{ floatval($currentCompany->setting('central_subsidy_tier2_rate', 18000)) }};
+
+            if (cap <= tier1Kw) {
+                return cap * tier1Rate;
             } else {
-                let base = 60000;
-                let extra = Math.min(1.0, cap - 2.0) * 18000;
+                let base = tier1Kw * tier1Rate;
+                let extra = Math.min(Math.max(0, tier2Kw - tier1Kw), cap - tier1Kw) * tier2Rate;
                 return base + extra;
             }
         },

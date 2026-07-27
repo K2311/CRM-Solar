@@ -214,17 +214,7 @@
     });
     @endif
 
-    @if($errors->any())
-    CrmSwal.fire({
-        icon: 'error',
-        title: 'Please fix the following errors',
-        html: '<ul style="text-align:left;padding-left:1.2rem;">' +
-            @foreach($errors->all() as $error)
-            '<li>{{ addslashes($error) }}</li>' +
-            @endforeach
-        '</ul>',
-    });
-    @endif
+
 
     // Global delete-confirm helper
     // Usage: <button onclick="swalDelete(this)"> on a button inside a <form>

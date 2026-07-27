@@ -31,15 +31,22 @@
             </div>
 
             <!-- Activity / Internal Notes -->
-            <div class="card">
-                <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 1.5rem;">Activity Log</h3>
+            <div class="card" x-data>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="font-size: 1rem; font-weight: 700; margin: 0;">Activity Log</h3>
+                    <button class="btn btn-outline" style="padding: 0.3rem 0.75rem; font-size: 0.8rem;" @click="$dispatch('open-activity-modal', {type: 'note'})"><i class="bi bi-plus-lg"></i> Add Note</button>
+                </div>
                 <div style="display: flex; flex-direction: column; gap: 1.5rem;">
                     @forelse($ticket->activities as $activity)
                     <div style="display: flex; gap: 1rem;">
-                        <img src="{{ $activity->user->avatar_url }}" style="width: 32px; height: 32px; border-radius: 50%;">
+                        @if($activity->user)
+                            <img src="{{ $activity->user->avatar_url }}" style="width: 32px; height: 32px; border-radius: 50%;">
+                        @else
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--bg-main); display: flex; align-items: center; justify-content: center;"><i class="bi bi-robot"></i></div>
+                        @endif
                         <div>
                             <div style="font-size: 0.875rem;">
-                                <strong>{{ $activity->user->name }}</strong>
+                                <strong>{{ $activity->user->name ?? 'System' }}</strong>
                                 <span style="color: var(--text-muted); margin-left: 0.5rem;">{{ $activity->created_at->diffForHumans() }}</span>
                             </div>
                             <div style="font-size: 0.875rem; margin-top: 0.25rem;">{{ $activity->description }}</div>
@@ -94,6 +101,47 @@
                     @endif
                 </div>
             </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Log Activity Modal -->
+    <div x-data="{ open: false, type: 'note' }" 
+         @open-activity-modal.window="open = true; type = $event.detail.type || 'note'"
+         x-show="open" 
+         class="modal-backdrop"
+         style="display: none;">
+        <div class="card glass-card" @click.away="open = false" style="width: 500px; padding: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="font-weight: 800;">Log Activity</h3>
+                <button @click="open = false" class="btn" style="padding: 0.5rem; background: transparent;"><i class="bi bi-x-lg"></i></button>
+            </div>
+            
+            <form action="{{ route('activities.store') }}" method="POST">
+                @csrf
+                <input type="hidden" name="subject_type" value="App\Models\ServiceTicket">
+                <input type="hidden" name="subject_id" value="{{ $ticket->id }}">
+                
+                <div class="form-group">
+                    <label class="form-label">Activity Type</label>
+                    <select name="type" class="form-control" x-model="type" required>
+                        <option value="note">Internal Note</option>
+                        <option value="call">Phone Call</option>
+                        <option value="email">Email</option>
+                        <option value="task">Maintenance Task</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea name="description" class="form-control" rows="4" placeholder="Update details..." required></textarea>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" @click="open = false" class="btn btn-outline">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Activity</button>
+                </div>
+            </form>
         </div>
     </div>
 </x-app-layout>

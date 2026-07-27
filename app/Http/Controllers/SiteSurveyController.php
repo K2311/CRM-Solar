@@ -35,9 +35,17 @@ class SiteSurveyController extends Controller
 
     public function store(Request $request)
     {
+        $company = $this->tenantRequired();
+        
         $data = $request->validate([
-            'lead_id'            => 'required|exists:leads,id',
-            'technician_id'      => 'required|exists:users,id',
+            'lead_id'            => [
+                'required',
+                \Illuminate\Validation\Rule::exists('leads', 'id')->where('company_id', $company->id)
+            ],
+            'technician_id'      => [
+                'required',
+                \Illuminate\Validation\Rule::exists('users', 'id')->where('company_id', $company->id)
+            ],
             'roof_area_sqft'     => 'required|numeric|min:1',
             'roof_type'          => 'required|string|max:50',
             'shading_details'    => 'required|string|max:50',
@@ -50,7 +58,6 @@ class SiteSurveyController extends Controller
         ]);
 
         $lead = Lead::findOrFail($data['lead_id']);
-        $company = $this->tenantRequired();
 
         $photoPaths = [];
         if ($request->hasFile('photos')) {
@@ -98,8 +105,13 @@ class SiteSurveyController extends Controller
 
     public function update(Request $request, SiteSurvey $siteSurvey)
     {
+        $company = $this->tenantRequired();
+        
         $data = $request->validate([
-            'technician_id'      => 'required|exists:users,id',
+            'technician_id'      => [
+                'required',
+                \Illuminate\Validation\Rule::exists('users', 'id')->where('company_id', $company->id)
+            ],
             'roof_area_sqft'     => 'required|numeric|min:1',
             'roof_type'          => 'required|string|max:50',
             'shading_details'    => 'required|string|max:50',

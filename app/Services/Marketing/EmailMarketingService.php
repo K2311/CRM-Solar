@@ -23,17 +23,24 @@ class EmailMarketingService
 
             if ($host && $username) {
                 config([
-                    'mail.mailers.smtp.host'       => $host,
-                    'mail.mailers.smtp.port'       => $port,
-                    'mail.mailers.smtp.username'   => $username,
-                    'mail.mailers.smtp.password'   => $password,
-                    'mail.mailers.smtp.encryption' => $company->setting('mail_encryption', 'tls'),
-                    'mail.from.address'            => $fromAddr,
-                    'mail.from.name'               => $fromName,
+                    'mail.mailers.tenant' => [
+                        'transport'  => 'smtp',
+                        'host'       => $host,
+                        'port'       => $port,
+                        'encryption' => $company->setting('mail_encryption', 'tls'),
+                        'username'   => $username,
+                        'password'   => $password,
+                    ]
                 ]);
+                app()->forgetInstance('mail.manager'); // Force Mail manager to reload configs
+                
+                Mail::mailer('tenant')
+                    ->alwaysFrom($fromAddr, $fromName)
+                    ->to($to)
+                    ->send(new CampaignMail($subject, $body, $fromName));
+            } else {
+                Mail::to($to)->send(new CampaignMail($subject, $body, $company->name));
             }
-
-            Mail::to($to)->send(new CampaignMail($subject, $body, $fromName));
             return true;
         } catch (\Exception $e) {
             Log::error("Email send failed: " . $e->getMessage());

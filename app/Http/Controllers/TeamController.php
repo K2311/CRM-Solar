@@ -74,6 +74,10 @@ class TeamController extends Controller
 
     public function updateRolePermissions(Request $request)
     {
+        $request->validate([
+            'role' => 'required|in:admin,sales,technician,accounts,member',
+        ]);
+
         $company = $this->tenantRequired();
         $companyId = $company->id;
         $role = $request->role;
@@ -88,6 +92,12 @@ class TeamController extends Controller
                 'permission_id' => $perm->id,
                 'granted' => isset($requestPermissions[$perm->id]),
             ]);
+        }
+
+        $users = User::where('company_id', $companyId)->where('role', $role)->get();
+        $permService = app(PermissionService::class);
+        foreach ($users as $user) {
+            $permService->clearCache($companyId, $user->id);
         }
 
         return back()->with('success', 'Role permissions updated.');
@@ -142,6 +152,9 @@ class TeamController extends Controller
         }
         
         $user->save();
+        
+        // Always clear permission cache when user details (especially role) change
+        app(\App\Services\PermissionService::class)->clearCache($company->id, $user->id);
 
         return back()->with('success', 'Team member updated successfully.');
     }

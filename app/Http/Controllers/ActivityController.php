@@ -21,6 +21,25 @@ class ActivityController extends Controller
         ]);
 
         $company = $this->tenantRequired();
+        
+        $allowedTypes = [
+            'App\Models\Lead',
+            'App\Models\Customer',
+            'App\Models\Quote',
+            'App\Models\Installation',
+            'App\Models\ServiceTicket',
+        ];
+
+        if (!in_array($data['subject_type'], $allowedTypes)) {
+            abort(403, 'Invalid subject type.');
+        }
+
+        $subjectClass = $data['subject_type'];
+        $subject = $subjectClass::find($data['subject_id']);
+        
+        if (!$subject || $subject->company_id !== $company->id) {
+            abort(404, 'Subject not found or access denied.');
+        }
         Activity::create(array_merge($data, [
             'company_id'   => $company->id,
             'user_id'      => auth()->id(),

@@ -9,6 +9,8 @@ class BillingController extends Controller
 {
     public function index()
     {
+        abort_unless(auth()->user()->isAdmin() || auth()->user()->is_super_admin, 403, 'Only admins or owners can access billing.');
+
         $company = auth()->user()->company;
         
         // Fallback for super admin impersonation
@@ -28,8 +30,15 @@ class BillingController extends Controller
 
     public function upgrade(Request $request)
     {
+        abort_unless(auth()->user()->isAdmin() || auth()->user()->is_super_admin, 403, 'Only admins or owners can request plan upgrades.');
+
+        $planSlugs = \App\Models\Plan::pluck('slug')->toArray();
+        if (empty($planSlugs)) {
+            $planSlugs = ['demo', 'pro', 'enterprise'];
+        }
+
         $request->validate([
-            'plan'          => 'required|string',
+            'plan'          => 'required|in:' . implode(',', $planSlugs),
             'payment_proof' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'notes'         => 'nullable|string|max:1000',
         ]);

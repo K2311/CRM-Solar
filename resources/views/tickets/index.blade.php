@@ -44,8 +44,22 @@
                         <span class="badge {{ $ticket->status === 'resolved' ? 'badge-success' : 'badge-warning' }}">{{ $ticket->status }}</span>
                     </td>
                     <td>{{ $ticket->assignedUser->name ?? 'Unassigned' }}</td>
-                    <td style="text-align: right;">
-                        <a href="{{ route('tickets.show', $ticket) }}" class="btn btn-outline" style="padding: 0.4rem;"><i class="bi bi-chat-left-text"></i></a>
+                    <td style="text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end; align-items: center;">
+                        <a href="{{ route('tickets.show', $ticket) }}" class="btn btn-outline" style="padding: 0.4rem;" title="View Details"><i class="bi bi-chat-left-text"></i></a>
+                        
+                        @if(auth()->user()->canDo('tickets.edit'))
+                        <a href="{{ route('tickets.edit', $ticket) }}" class="btn btn-outline" style="padding: 0.4rem; color: #3b82f6; border-color: #bfdbfe;" title="Edit Ticket"><i class="bi bi-pencil"></i></a>
+                        @endif
+
+                        @if(auth()->user()->canDo('tickets.delete'))
+                        <form action="{{ route('tickets.destroy', $ticket) }}" method="POST" style="display:inline;">
+                            @csrf
+                            @method('DELETE')
+                            <button type="button" class="btn btn-outline" style="padding: 0.4rem; color: #ef4444; border-color: #fca5a5;" title="Delete Ticket" onclick="swalDelete(this.closest('form'))">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                        @endif
                     </td>
                 </tr>
                 @endforeach

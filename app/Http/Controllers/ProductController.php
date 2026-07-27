@@ -29,6 +29,7 @@ class ProductController extends Controller
             'description'=> 'nullable|string',
             'unit_price' => 'required|numeric|min:0',
             'unit'       => 'required|string|max:30',
+            'capacity_watts' => 'nullable|integer|min:0',
             'is_active'  => 'boolean',
         ]);
         Product::create($data);
@@ -49,6 +50,7 @@ class ProductController extends Controller
             'description'=> 'nullable|string',
             'unit_price' => 'required|numeric|min:0',
             'unit'       => 'required|string|max:30',
+            'capacity_watts' => 'nullable|integer|min:0',
             'is_active'  => 'boolean',
         ]);
         $product->update($data);

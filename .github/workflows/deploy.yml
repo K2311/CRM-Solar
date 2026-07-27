@@ -1,0 +1,149 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: mbstring, dom, fileinfo, mysql, zip, gd, curl, xml, bcmath, soap, intl, readline, libxml, openssl, pdo, tokenizer, xmlwriter, xmlreader, iconv, ctype, json, pdo_mysql
+        coverage: none
+
+    - name: Get Composer Cache Directory
+      id: composer-cache
+      run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+    - name: Cache Composer dependencies
+      uses: actions/cache@v3
+      with:
+        path: ${{ steps.composer-cache.outputs.dir }}
+        key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+        restore-keys: ${{ runner.os }}-composer-
+    
+    - name: Prepare SQLite database
+      run: |
+        mkdir -p database
+        touch database/database.sqlite
+
+    - name: Install Composer dependencies
+      run: composer install --no-dev --optimize-autoloader --no-interaction
+
+    - name: Setup Node.js (if needed)
+      if: hashFiles('package-lock.json') != ''
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install NPM dependencies (if needed)
+      if: hashFiles('package-lock.json') != ''
+      run: npm ci
+
+    - name: Build assets (if needed)
+      if: hashFiles('package-lock.json') != ''
+      run: npm run build
+
+    - name: Create deployment package
+      run: |
+        # Create a clean deployment package
+        mkdir -p deployment
+
+        # Copy essential files (skip vendor to avoid FTP timeout)
+        cp -r app bootstrap config database public resources routes artisan composer.json composer.lock .env.example api-docs.md deployment/
+
+        # Copy essential root files
+        if [ -f "index.php" ]; then
+          cp index.php deployment/
+        fi
+        if [ -f ".htaccess" ]; then
+          cp .htaccess deployment/
+        fi
+
+        # Copy deployment scripts
+        cp -r scripts deployment/
+
+        # Copy package.json if it exists
+        if [ -f "package.json" ]; then
+          cp package.json deployment/
+        fi
+
+        # Copy package-lock.json if it exists
+        if [ -f "package-lock.json" ]; then
+          cp package-lock.json deployment/
+        fi
+
+        # Copy built assets (if they exist)
+        if [ -d "public/build" ]; then
+          cp -r public/build deployment/public/
+        fi
+
+        # Create .env file for production
+        cp .env.example deployment/.env
+
+        # Set proper permissions
+        chmod -R 755 deployment/
+        chmod 644 deployment/.env
+
+    - name: Deploy via FTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      with:
+        server: 217.21.84.134
+        username: u321853992.solar-crm.docuviral.com
+        password: Wd1#86Ny|>12>@1E
+        local-dir: ./deployment/
+        server-dir: /public_html/
+        log-level: minimal
+        dry-run: false
+        timeout: 300000
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          **/.env
+          **/.env.*
+          **/tests/**
+          **/storage/logs/**
+          **/storage/framework/cache/**
+          **/storage/framework/sessions/**
+          **/storage/framework/views/**
+          **/.phpunit.cache
+          **/Homestead.json
+          **/Homestead.yaml
+          **/auth.json
+          **/npm-debug.log
+          **/yarn-error.log
+          **/.fleet
+          **/.idea
+          **/.vscode
+          **/deployment/**
+
+    - name: Run post-deployment commands
+      run: |
+        echo "Deployment completed successfully!"
+        echo ""
+        echo "📋 Next steps to complete setup:"
+        echo "1. Open your web browser"
+        echo "2. Go to: http://your-domain.com/services/scripts/web-deploy.php?password=deploy123"
+        echo "3. The script will automatically:"
+        echo "   - Install/update Composer dependencies (creates vendor directory)"
+        echo "   - Generate application key"
+        echo "   - Run database migrations"
+        echo "   - Optimize Laravel caches"
+        echo "   - Set proper file permissions"
+        echo "4. Configure your web server to point to /services/public"
+        echo ""
+        echo "🚀 Your Laravel application is now deployed!"
+        echo "💡 Vendor directory will be created via composer install on server"
+        echo "🌐 Web deployment script available at: /services/scripts/web-deploy.php"

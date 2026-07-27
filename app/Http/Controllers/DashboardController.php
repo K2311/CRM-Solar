@@ -32,15 +32,17 @@ class DashboardController extends Controller
         $leadsByStage = \App\Models\Lead::select('stage', DB::raw('count(*) as count'))
             ->groupBy('stage')->pluck('count', 'stage')->toArray();
 
-        // Revenue chart
-        $revenueMonthly = \App\Models\Payment::select(
-                DB::raw("strftime('%Y-%m', payment_date) as month"),
-                DB::raw('sum(amount) as total')
-            )
-            ->where('payment_date', '>=', now()->subMonths(6))
-            ->groupBy('month')
-            ->orderBy('month')
-            ->pluck('total', 'month')->toArray();
+        // Revenue chart (Database agnostic grouping)
+        $sixMonthsAgo = now()->subMonths(6);
+        $payments = \App\Models\Payment::where('payment_date', '>=', $sixMonthsAgo)
+            ->get(['amount', 'payment_date']);
+            
+        $revenueMonthly = [];
+        foreach ($payments as $payment) {
+            $month = $payment->payment_date->format('Y-m');
+            $revenueMonthly[$month] = ($revenueMonthly[$month] ?? 0) + $payment->amount;
+        }
+        ksort($revenueMonthly);
 
         // 2. Role-specific queries
         $stuckSubsidies = collect();

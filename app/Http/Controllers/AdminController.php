@@ -60,60 +60,7 @@ class AdminController extends Controller
             'is_active'  => true,
         ]);
 
-        // Seed default roles/permissions for the new company
-        $allPerms = \App\Models\Permission::all();
-        foreach ($allPerms as $perm) {
-            // Admin gets everything
-            \App\Models\RolePermission::create([
-                'company_id' => $company->id,
-                'role' => 'admin',
-                'permission_id' => $perm->id,
-                'granted' => true,
-            ]);
-
-            // Member default view
-            if (\Str::endsWith($perm->name, '.view')) {
-                \App\Models\RolePermission::create([
-                    'company_id' => $company->id,
-                    'role' => 'member',
-                    'permission_id' => $perm->id,
-                    'granted' => true,
-                ]);
-            }
-            
-            // Sales default
-            $isSales = \Str::startsWith($perm->name, ['customers', 'leads', 'quotes']) || $perm->name === 'products.view';
-            if ($isSales) {
-                \App\Models\RolePermission::create([
-                    'company_id' => $company->id,
-                    'role' => 'sales',
-                    'permission_id' => $perm->id,
-                    'granted' => true,
-                ]);
-            }
-
-            // Tech default
-            $isTech = $perm->name === 'installations.view' || $perm->name === 'installations.edit' || \Str::startsWith($perm->name, 'tickets') || $perm->name === 'products.view';
-            if ($isTech) {
-                \App\Models\RolePermission::create([
-                    'company_id' => $company->id,
-                    'role' => 'technician',
-                    'permission_id' => $perm->id,
-                    'granted' => true,
-                ]);
-            }
-
-            // Accounts default
-            $isAccts = \Str::startsWith($perm->name, 'payments') || $perm->name === 'quotes.view' || $perm->name === 'products.view';
-            if ($isAccts) {
-                \App\Models\RolePermission::create([
-                    'company_id' => $company->id,
-                    'role' => 'accounts',
-                    'permission_id' => $perm->id,
-                    'granted' => true,
-                ]);
-            }
-        }
+        // Default roles/permissions are automatically seeded by the Company Model's 'created' event.
 
         return back()->with('success', "Registered new company {$company->name} with Owner {$request->owner_name}");
     }

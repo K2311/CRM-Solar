@@ -43,8 +43,8 @@
                         <div style="padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" @click="activeMilestone = (activeMilestone === {{ $milestone->id }} ? null : {{ $milestone->id }})">
                             <div style="display: flex; align-items: center; gap: 1rem;">
                                 <div style="width: 2rem; height: 2rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem;
-                                    background: {{ $milestone->status === 'completed' ? '#10b981' : ($milestone->status === 'in_progress' ? '#f59e0b' : 'rgba(255,255,255,0.05)') }};
-                                    color: white;">
+                                    background: {{ $milestone->status === 'completed' ? '#10b981' : ($milestone->status === 'in_progress' ? '#f59e0b' : 'var(--bg-light, #f1f5f9)') }};
+                                    color: {{ $milestone->status === 'pending' ? 'var(--text-muted)' : 'white' }};">
                                     @if($milestone->status === 'completed')
                                         <i class="bi bi-check-lg"></i>
                                     @else
@@ -52,7 +52,7 @@
                                     @endif
                                 </div>
                                 <div>
-                                    <h4 style="font-size: 0.95rem; font-weight: 700; color: {{ $milestone->status === 'completed' ? '#10b981' : 'white' }}">{{ $milestone->name }}</h4>
+                                    <h4 style="font-size: 0.95rem; font-weight: 700; color: {{ $milestone->status === 'completed' ? '#10b981' : 'var(--text)' }}">{{ $milestone->name }}</h4>
                                     @if($milestone->status === 'completed' && $milestone->completed_at)
                                         <span style="font-size: 0.75rem; color: var(--text-muted);">Completed on {{ $milestone->completed_at->format('M d, Y H:i') }}</span>
                                     @else
@@ -73,7 +73,7 @@
                             <div style="display: grid; grid-template-columns: {{ $milestone->photo_path ? '1fr 150px' : '1fr' }}; gap: 1.5rem; margin-top: 1rem; margin-bottom: 1.5rem;">
                                 <div>
                                     <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 0.25rem;">Milestone Comments / Checklist</span>
-                                    <p style="color: white; font-size: 0.85rem; margin: 0; white-space: pre-line;">{{ $milestone->notes ?: 'No description/notes provided.' }}</p>
+                                    <p style="color: var(--text); font-size: 0.85rem; margin: 0; white-space: pre-line;">{{ $milestone->notes ?: 'No description/notes provided.' }}</p>
                                 </div>
                                 @if($milestone->photo_path)
                                 <div>

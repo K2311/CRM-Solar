@@ -14,6 +14,66 @@ class Company extends Model
         'plan', 'plan_status', 'plan_expires_at', 'payment_method',
     ];
 
+    protected static function booted()
+    {
+        static::created(function ($company) {
+            $allPerms = \App\Models\Permission::all();
+            
+            foreach ($allPerms as $perm) {
+                // Admins get everything
+                \App\Models\RolePermission::create([
+                    'company_id' => $company->id,
+                    'role' => 'admin',
+                    'permission_id' => $perm->id,
+                    'granted' => true,
+                ]);
+
+                // Members get view access
+                if (\Illuminate\Support\Str::endsWith($perm->name, '.view')) {
+                    \App\Models\RolePermission::create([
+                        'company_id' => $company->id,
+                        'role' => 'member',
+                        'permission_id' => $perm->id,
+                        'granted' => true,
+                    ]);
+                }
+
+                // Sales: customers, leads, quotes, products.view
+                $isSalesPerm = \Illuminate\Support\Str::startsWith($perm->name, ['customers', 'leads', 'quotes']) || $perm->name === 'products.view';
+                if ($isSalesPerm) {
+                    \App\Models\RolePermission::create([
+                        'company_id' => $company->id,
+                        'role' => 'sales',
+                        'permission_id' => $perm->id,
+                        'granted' => true,
+                    ]);
+                }
+
+                // Technician: installations.view, installations.edit, tickets.*, products.view
+                $isTechPerm = $perm->name === 'installations.view' || $perm->name === 'installations.edit' || \Illuminate\Support\Str::startsWith($perm->name, 'tickets') || $perm->name === 'products.view';
+                if ($isTechPerm) {
+                    \App\Models\RolePermission::create([
+                        'company_id' => $company->id,
+                        'role' => 'technician',
+                        'permission_id' => $perm->id,
+                        'granted' => true,
+                    ]);
+                }
+
+                // Accounts: payments.*, quotes.view, products.view
+                $isAcctsPerm = \Illuminate\Support\Str::startsWith($perm->name, 'payments') || $perm->name === 'quotes.view' || $perm->name === 'products.view';
+                if ($isAcctsPerm) {
+                    \App\Models\RolePermission::create([
+                        'company_id' => $company->id,
+                        'role' => 'accounts',
+                        'permission_id' => $perm->id,
+                        'granted' => true,
+                    ]);
+                }
+            }
+        });
+    }
+
     protected $casts = [
         'plan_expires_at' => 'datetime',
         'is_active' => 'boolean',

@@ -99,6 +99,15 @@
                                 @if(auth()->user()->canDo('leads.edit'))
                                 <a href="{{ route('leads.edit', $lead) }}" class="btn btn-outline" style="width: 32px; height: 32px; padding: 0; color: var(--primary); border-color: rgba(14, 165, 233, 0.2);" title="Edit"><i class="bi bi-pencil"></i></a>
                                 @endif
+                                @if(auth()->user()->canDo('leads.delete'))
+                                <form action="{{ route('leads.destroy', $lead) }}" method="POST" id="del-lead-{{ $lead->id }}" style="display:inline;">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="button" class="btn btn-outline" style="width: 32px; height: 32px; padding: 0; color: #ef4444; border-color: rgba(239, 68, 68, 0.2);" title="Delete" onclick="swalDelete(this, 'Delete lead \'{{ addslashes($lead->title) }}\'? This cannot be undone.')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                @endif
                             </div>
                         </td>
                     </tr>

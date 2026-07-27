@@ -28,9 +28,9 @@
                 <div style="width: 8px; height: 8px; border-radius: 50%; background: {{ \App\Models\Lead::stageColors()[$stage] ?? '#eee' }}"></div>
             </div>
 
-            <div class="cards-container" style="flex: 1; overflow-y: auto; overflow-x: hidden; border-top: 2px solid {{ \App\Models\Lead::stageColors()[$stage] ?? '#334155' }}; padding-top: 1rem; padding-right: 0.5rem; display: flex; flex-direction: column; gap: 1rem;">
+            <div class="cards-container" ondragover="allowDrop(event)" ondrop="drop(event, '{{ $stage }}')" ondragleave="dragLeave(event)" style="flex: 1; overflow-y: auto; overflow-x: hidden; border-top: 2px solid {{ \App\Models\Lead::stageColors()[$stage] ?? '#334155' }}; padding-top: 1rem; padding-right: 0.5rem; display: flex; flex-direction: column; gap: 1rem; transition: background 0.2s;">
                 @forelse($leadsByStage[$stage] ?? [] as $lead)
-                <div class="card glass-card animate-fade" style="padding: 1.25rem; cursor: pointer; transition: transform 0.2s;" onclick="location.href='{{ route('leads.show', $lead) }}'">
+                <div class="card glass-card animate-fade" draggable="true" ondragstart="drag(event, {{ $lead->id }})" style="padding: 1.25rem; cursor: grab; transition: transform 0.2s;" onclick="if(!window.isDragging) location.href='{{ route('leads.show', $lead) }}'">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
                         <span style="font-size: 0.65rem; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 4px; background: rgba(255,255,255,0.05); color: var(--text-muted);">{{ $lead->source ?? 'Direct' }}</span>
                         <span style="font-weight: 700; color: var(--primary); font-size: 0.875rem;">{{ $currentCompany->currency_symbol }}{{ number_format($lead->value) }}</span>
@@ -84,4 +84,42 @@
         </div>
     </div>
     @endif
+
+    @push('head_scripts')
+    <script>
+        function allowDrop(ev) {
+            ev.preventDefault();
+            ev.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+        }
+        
+        function dragLeave(ev) {
+            ev.currentTarget.style.background = 'transparent';
+        }
+
+        function drag(ev, leadId) {
+            window.isDragging = true;
+            setTimeout(() => window.isDragging = false, 100);
+            ev.dataTransfer.setData("leadId", leadId);
+        }
+
+        function drop(ev, newStage) {
+            ev.preventDefault();
+            ev.currentTarget.style.background = 'transparent';
+            var leadId = ev.dataTransfer.getData("leadId");
+            if (!leadId) return;
+            
+            var form = document.getElementById('updateStageForm');
+            // Assuming route is /leads/{lead}/stage
+            form.action = '/leads/' + leadId + '/stage';
+            document.getElementById('stageInput').value = newStage;
+            form.submit();
+        }
+    </script>
+    @endpush
+
+    <form id="updateStageForm" method="POST" style="display: none;">
+        @csrf
+        @method('PATCH')
+        <input type="hidden" name="stage" id="stageInput">
+    </form>
 </x-app-layout>

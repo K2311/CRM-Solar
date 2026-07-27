@@ -24,6 +24,7 @@ class Lead extends Model
     public function installation() { return $this->hasOne(Installation::class); }
     public function activities() { return $this->morphMany(Activity::class, 'subject'); }
     public function siteSurvey() { return $this->hasOne(SiteSurvey::class); }
+    public function products() { return $this->belongsToMany(Product::class); }
 
     public static function stages(): array
     {

@@ -32,10 +32,21 @@ class ServiceTicketController extends Controller
 
     public function store(Request $request)
     {
+        $company = $this->tenantRequired();
+        
         $data = $request->validate([
-            'customer_id'     => 'required|exists:customers,id',
-            'installation_id' => 'nullable|exists:installations,id',
-            'assigned_user_id'=> 'nullable|exists:users,id',
+            'customer_id'     => [
+                'required',
+                \Illuminate\Validation\Rule::exists('customers', 'id')->where('company_id', $company->id)
+            ],
+            'installation_id' => [
+                'nullable',
+                \Illuminate\Validation\Rule::exists('installations', 'id')->where('company_id', $company->id)
+            ],
+            'assigned_user_id'=> [
+                'nullable',
+                \Illuminate\Validation\Rule::exists('users', 'id')->where('company_id', $company->id)
+            ],
             'title'           => 'required|string|max:255',
             'description'     => 'nullable|string',
             'priority'        => 'required|in:low,medium,high,urgent',
@@ -62,12 +73,17 @@ class ServiceTicketController extends Controller
 
     public function update(Request $request, ServiceTicket $ticket)
     {
+        $company = $this->tenantRequired();
+        
         $data = $request->validate([
             'title'           => 'required|string|max:255',
             'description'     => 'nullable|string',
             'priority'        => 'required|in:low,medium,high,urgent',
             'status'          => 'required|in:open,in_progress,resolved,closed',
-            'assigned_user_id'=> 'nullable|exists:users,id',
+            'assigned_user_id'=> [
+                'nullable',
+                \Illuminate\Validation\Rule::exists('users', 'id')->where('company_id', $company->id)
+            ],
         ]);
         if ($data['status'] === 'resolved' && !$ticket->resolved_at) {
             $data['resolved_at'] = now();

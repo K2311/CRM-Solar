@@ -23,11 +23,13 @@
                     <div>
                         <label class="form-label">Email Address</label>
                         <input type="email" name="email" class="form-control" value="{{ old('email') }}" placeholder="john@example.com">
+                        @error('email') <span style="color: #ef4444; font-size: 0.75rem;">{{ $message }}</span> @enderror
                     </div>
 
                     <div>
                         <label class="form-label">Phone Number</label>
                         <input type="text" name="phone" class="form-control" value="{{ old('phone') }}" placeholder="+1 (555) 000-0000">
+                        @error('phone') <span style="color: #ef4444; font-size: 0.75rem;">{{ $message }}</span> @enderror
                     </div>
 
                     <div>
@@ -74,7 +76,7 @@
                     <textarea name="notes" class="form-control" rows="4" placeholder="Any special instructions or background info about this customer...">{{ old('notes') }}</textarea>
                 </div>
 
-                <div style="display: flex; gap: 1rem; justify-content: flex-end; border-top: 1px solid var(--border); pt: 1.5rem;">
+                <div style="display: flex; gap: 1rem; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: 1.5rem;">
                     <a href="{{ route('customers.index') }}" class="btn btn-outline">Cancel</a>
                     <button type="submit" class="btn btn-primary">Create Customer</button>
                 </div>

@@ -40,6 +40,12 @@ class Quote extends Model
             return $item->qty * $item->unit_price;
         });
         $discount = $this->discount ?? 0;
+        
+        // Ensure discount cannot exceed subtotal (prevents negative invoices)
+        if ($discount > $subtotal) {
+            $discount = $subtotal;
+        }
+        
         $taxable = $subtotal - $discount;
         $tax = $taxable * ($this->tax_rate / 100);
         $total = $taxable + $tax;
@@ -73,7 +79,18 @@ class Quote extends Model
 
     public static function generateNumber(int $companyId): string
     {
-        $last = static::withoutGlobalScopes()->where('company_id', $companyId)->count();
-        return 'QT-' . str_pad($companyId, 3, '0', STR_PAD_LEFT) . '-' . str_pad($last + 1, 5, '0', STR_PAD_LEFT);
+        $last = static::withoutGlobalScopes()
+            ->where('company_id', $companyId)
+            ->lockForUpdate()
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $nextNumber = 1;
+        if ($last && $last->quote_number) {
+            $parts = explode('-', $last->quote_number);
+            $nextNumber = intval(end($parts)) + 1;
+        }
+
+        return 'QT-' . str_pad($companyId, 3, '0', STR_PAD_LEFT) . '-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
     }
 }

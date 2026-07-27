@@ -55,7 +55,7 @@
                     <textarea name="description" class="form-control" rows="5">{{ old('description', $ticket->description) }}</textarea>
                 </div>
 
-                <div style="display: flex; gap: 1rem; justify-content: flex-end; border-top: 1px solid var(--border); pt: 1.5rem;">
+                <div style="display: flex; gap: 1rem; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: 1.5rem;">
                     <a href="{{ route('tickets.show', $ticket) }}" class="btn btn-outline">Cancel</a>
                     <button type="submit" class="btn btn-primary">Update Ticket</button>
                 </div>

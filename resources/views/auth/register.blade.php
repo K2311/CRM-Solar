@@ -29,23 +29,46 @@
 
         <form action="{{ route('register') }}" method="POST">
             @csrf
+            
+            @if ($errors->any())
+                <div style="background-color: #fee2e2; border: 1px solid #ef4444; color: #b91c1c; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; font-size: 0.875rem;">
+                    <ul style="margin: 0; padding-left: 1.5rem;">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
                 <div class="form-group">
                     <label class="form-label">Company Name</label>
-                    <input type="text" name="company_name" class="form-control" placeholder="SolarTech Ltd" required value="{{ old('company_name') }}">
+                    <input type="text" name="company_name" class="form-control @error('company_name') is-invalid @enderror" placeholder="SolarTech Ltd" required value="{{ old('company_name') }}">
+                    @error('company_name')
+                        <span class="invalid-feedback" style="color: #ef4444; font-size: 0.75rem; margin-top: 0.25rem; display: block;">{{ $message }}</span>
+                    @enderror
                 </div>
                 <div class="form-group">
                     <label class="form-label">Owner Name</label>
-                    <input type="text" name="name" class="form-control" placeholder="John Doe" required value="{{ old('name') }}">
+                    <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" placeholder="John Doe" required value="{{ old('name') }}">
+                    @error('name')
+                        <span class="invalid-feedback" style="color: #ef4444; font-size: 0.75rem; margin-top: 0.25rem; display: block;">{{ $message }}</span>
+                    @enderror
                 </div>
                 <div class="form-group">
                     <label class="form-label">Email Address</label>
-                    <input type="email" name="email" class="form-control" placeholder="john@company.com" required value="{{ old('email') }}">
+                    <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" placeholder="john@company.com" required value="{{ old('email') }}">
+                    @error('email')
+                        <span class="invalid-feedback" style="color: #ef4444; font-size: 0.75rem; margin-top: 0.25rem; display: block;">{{ $message }}</span>
+                    @enderror
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div class="form-group">
                         <label class="form-label">Password</label>
-                        <input type="password" name="password" class="form-control" required>
+                        <input type="password" name="password" class="form-control @error('password') is-invalid @enderror" required>
+                        @error('password')
+                            <span class="invalid-feedback" style="color: #ef4444; font-size: 0.75rem; margin-top: 0.25rem; display: block;">{{ $message }}</span>
+                        @enderror
                     </div>
                     <div class="form-group">
                         <label class="form-label">Confirm</label>

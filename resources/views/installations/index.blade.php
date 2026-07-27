@@ -48,8 +48,18 @@
                         <span class="badge {{ $stClass }}">{{ strtoupper($install->status) }}</span>
                     </td>
                     <td>{{ $install->assignedUser->name ?? 'Unassigned' }}</td>
-                    <td style="text-align: right;">
-                        <a href="{{ route('installations.show', $install) }}" class="btn btn-outline" style="padding: 0.4rem;"><i class="bi bi-eye"></i></a>
+                    <td style="text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end; align-items: center;">
+                        <a href="{{ route('installations.show', $install) }}" class="btn btn-outline" style="padding: 0.4rem;" title="View"><i class="bi bi-eye"></i></a>
+                        @if(auth()->user()->canDo('installations.update'))
+                        <a href="{{ route('installations.edit', $install) }}" class="btn btn-outline" style="padding: 0.4rem;" title="Edit"><i class="bi bi-pencil"></i></a>
+                        @endif
+                        @if(auth()->user()->canDo('installations.delete'))
+                        <form action="{{ route('installations.destroy', $install) }}" method="POST" style="display:inline;">
+                            @csrf
+                            @method('DELETE')
+                            <button type="button" class="btn btn-outline" style="padding: 0.4rem; color: #ef4444; border-color: #fca5a5;" title="Delete" onclick="swalDelete(this, 'Are you sure you want to delete this installation?')"><i class="bi bi-trash"></i></button>
+                        </form>
+                        @endif
                     </td>
                 </tr>
                 @endforeach

@@ -25,20 +25,37 @@ class CampaignDispatcher
 
         // Build contacts from segment
         $contacts = $this->buildContacts($campaign, $company);
-        $campaign->update(['total_contacts' => $contacts->count()]);
-
-        foreach ($contacts as $contact) {
+        
+        if (in_array($campaign->channel, ['facebook', 'instagram'])) {
+            $campaign->update(['total_contacts' => 1]);
+            
             $cc = CampaignContact::create([
                 'campaign_id'  => $campaign->id,
-                'contact_type' => get_class($contact) === Customer::class ? 'customer' : 'lead',
-                'contact_id'   => $contact->id,
-                'name'         => $contact->name ?? ($contact->customer->name ?? ''),
-                'phone'        => $contact->phone ?? ($contact->customer->phone ?? ''),
-                'email'        => $contact->email ?? ($contact->customer->email ?? ''),
+                'contact_type' => 'social',
+                'contact_id'   => 0,
+                'name'         => ucfirst($campaign->channel) . ' Post',
+                'phone'        => '',
+                'email'        => '',
                 'status'       => 'pending',
             ]);
-
+            
             $this->sendToContact($campaign, $company, $cc);
+        } else {
+            $campaign->update(['total_contacts' => $contacts->count()]);
+
+            foreach ($contacts as $contact) {
+                $cc = CampaignContact::create([
+                    'campaign_id'  => $campaign->id,
+                    'contact_type' => get_class($contact) === Customer::class ? 'customer' : 'lead',
+                    'contact_id'   => $contact->id,
+                    'name'         => $contact->name ?? ($contact->customer->name ?? ''),
+                    'phone'        => $contact->phone ?? ($contact->customer->phone ?? ''),
+                    'email'        => $contact->email ?? ($contact->customer->email ?? ''),
+                    'status'       => 'pending',
+                ]);
+
+                $this->sendToContact($campaign, $company, $cc);
+            }
         }
 
         $sent   = $campaign->contacts()->where('status', 'sent')->count();
@@ -49,9 +66,11 @@ class CampaignDispatcher
     private function buildContacts(Campaign $campaign, Company $company)
     {
         return match($campaign->segment) {
-            'customers' => Customer::where('company_id', $company->id)->get(),
+            'customers' => Customer::where('company_id', $company->id)
+                              ->where('status', 'active')->get(),
             'leads'     => Lead::where('company_id', $company->id)
                               ->whereNotIn('stage', ['won', 'lost'])->get(),
+            'all'       => Customer::where('company_id', $company->id)->get(),
             default     => Customer::where('company_id', $company->id)->get(),
         };
     }

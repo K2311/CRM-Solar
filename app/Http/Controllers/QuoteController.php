@@ -30,9 +30,17 @@ class QuoteController extends Controller
 
     public function store(Request $request)
     {
+        $company = $this->tenantRequired();
+
         $data = $request->validate([
-            'customer_id' => 'required|exists:customers,id',
-            'lead_id'     => 'nullable|exists:leads,id',
+            'customer_id' => [
+                'required',
+                \Illuminate\Validation\Rule::exists('customers', 'id')->where('company_id', $company->id)
+            ],
+            'lead_id'     => [
+                'nullable',
+                \Illuminate\Validation\Rule::exists('leads', 'id')->where('company_id', $company->id)
+            ],
             'valid_until' => 'nullable|date',
             'notes'       => 'nullable|string',
             'discount'    => 'nullable|numeric|min:0',
@@ -45,38 +53,44 @@ class QuoteController extends Controller
             'items.*.description' => 'required|string',
             'items.*.qty'      => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
-            'items.*.product_id' => 'nullable|exists:products,id',
+            'items.*.product_id' => [
+                'nullable',
+                \Illuminate\Validation\Rule::exists('products', 'id')->where('company_id', $company->id)
+            ],
         ]);
 
-        $company = $this->tenantRequired();
         $hasSubsidy = $request->has('has_subsidy') && ($request->has_subsidy == '1' || $request->has_subsidy == 'on' || $request->has_subsidy == 'true');
 
-        $quote = Quote::create([
-            'company_id'   => $company->id,
-            'customer_id'  => $data['customer_id'],
-            'lead_id'      => $data['lead_id'] ?? null,
-            'quote_number' => Quote::generateNumber($company->id),
-            'valid_until'  => $data['valid_until'] ?? null,
-            'notes'        => $data['notes'] ?? null,
-            'discount'     => $data['discount'] ?? 0,
-            'tax_rate'     => $data['tax_rate'] ?? 0,
-            'has_subsidy'  => $hasSubsidy,
-            'advance_milestone_pct' => $data['advance_milestone_pct'] ?? 10.00,
-            'delivery_milestone_pct' => $data['delivery_milestone_pct'] ?? 70.00,
-            'commissioning_milestone_pct' => $data['commissioning_milestone_pct'] ?? 20.00,
-            'status'       => 'draft',
-        ]);
-
-        foreach ($request->items as $item) {
-            QuoteItem::create([
-                'quote_id'   => $quote->id,
-                'product_id' => $item['product_id'] ?? null,
-                'description'=> $item['description'],
-                'qty'        => $item['qty'],
-                'unit_price' => $item['unit_price'],
-                'subtotal'   => $item['qty'] * $item['unit_price'],
+        $quote = \Illuminate\Support\Facades\DB::transaction(function () use ($company, $data, $hasSubsidy, $request) {
+            $quote = Quote::create([
+                'company_id'   => $company->id,
+                'customer_id'  => $data['customer_id'],
+                'lead_id'      => $data['lead_id'] ?? null,
+                'quote_number' => Quote::generateNumber($company->id),
+                'valid_until'  => $data['valid_until'] ?? null,
+                'notes'        => $data['notes'] ?? null,
+                'discount'     => $data['discount'] ?? 0,
+                'tax_rate'     => $data['tax_rate'] ?? 0,
+                'has_subsidy'  => $hasSubsidy,
+                'advance_milestone_pct' => $data['advance_milestone_pct'] ?? 10.00,
+                'delivery_milestone_pct' => $data['delivery_milestone_pct'] ?? 70.00,
+                'commissioning_milestone_pct' => $data['commissioning_milestone_pct'] ?? 20.00,
+                'status'       => 'draft',
             ]);
-        }
+
+            foreach ($request->items as $item) {
+                QuoteItem::create([
+                    'quote_id'   => $quote->id,
+                    'product_id' => $item['product_id'] ?? null,
+                    'description'=> $item['description'],
+                    'qty'        => $item['qty'],
+                    'unit_price' => $item['unit_price'],
+                    'subtotal'   => $item['qty'] * $item['unit_price'],
+                ]);
+            }
+            
+            return $quote;
+        });
 
         $quote->load('items');
         $quote->recalculate();
@@ -124,6 +138,9 @@ class QuoteController extends Controller
         if ($data['status'] === 'accepted') {
             if ($quote->lead) {
                 $quote->lead->update(['stage' => 'won']);
+            }
+            if ($quote->customer && $quote->customer->status !== 'active') {
+                $quote->customer->update(['status' => 'active']);
             }
 
             $exists = \App\Models\Installation::where('quote_id', $quote->id)->exists();

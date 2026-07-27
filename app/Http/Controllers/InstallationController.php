@@ -33,11 +33,25 @@ class InstallationController extends Controller
 
     public function store(Request $request)
     {
+        $company = $this->tenantRequired();
+        
         $data = $request->validate([
-            'customer_id'    => 'required|exists:customers,id',
-            'lead_id'        => 'nullable|exists:leads,id',
-            'quote_id'       => 'nullable|exists:quotes,id',
-            'assigned_user_id' => 'nullable|exists:users,id',
+            'customer_id'    => [
+                'required',
+                \Illuminate\Validation\Rule::exists('customers', 'id')->where('company_id', $company->id)
+            ],
+            'lead_id'        => [
+                'nullable',
+                \Illuminate\Validation\Rule::exists('leads', 'id')->where('company_id', $company->id)
+            ],
+            'quote_id'       => [
+                'nullable',
+                \Illuminate\Validation\Rule::exists('quotes', 'id')->where('company_id', $company->id)
+            ],
+            'assigned_user_id' => [
+                'nullable',
+                \Illuminate\Validation\Rule::exists('users', 'id')->where('company_id', $company->id)
+            ],
             'status'         => 'required|in:scheduled,in_progress,completed,cancelled',
             'scheduled_date' => 'nullable|date',
             'completed_date' => 'nullable|date',
@@ -47,7 +61,17 @@ class InstallationController extends Controller
             'panel_count'    => 'nullable|integer|min:0',
             'notes'          => 'nullable|string',
         ]);
-        Installation::create($data);
+        $installation = Installation::create($data);
+        
+        // Auto-generate 10 default milestones
+        foreach (\App\Models\InstallationMilestone::defaultMilestones() as $number => $name) {
+            $installation->milestones()->create([
+                'milestone_number' => $number,
+                'name' => $name,
+                'status' => 'pending'
+            ]);
+        }
+        
         return redirect()->route('installations.index')->with('success', 'Installation created.');
     }
 
@@ -57,11 +81,26 @@ class InstallationController extends Controller
             'customer', 'lead', 'quote', 'assignedUser', 'serviceTickets', 'activities.user',
             'milestones' => fn($q) => $q->orderBy('milestone_number')
         ]);
+
+        // Fix for existing installations that didn't get milestones generated
+        if ($installation->milestones->isEmpty()) {
+            foreach (\App\Models\InstallationMilestone::defaultMilestones() as $number => $name) {
+                $installation->milestones()->create([
+                    'milestone_number' => $number,
+                    'name' => $name,
+                    'status' => 'pending'
+                ]);
+            }
+            $installation->load(['milestones' => fn($q) => $q->orderBy('milestone_number')]);
+        }
+
         return view('installations.show', compact('installation'));
     }
 
     public function updateMilestone(Request $request, Installation $installation, \App\Models\InstallationMilestone $milestone)
     {
+        abort_if($milestone->installation_id !== $installation->id, 404);
+
         $data = $request->validate([
             'status' => 'required|in:pending,in_progress,completed',
             'notes'  => 'nullable|string',
@@ -72,6 +111,18 @@ class InstallationController extends Controller
             'status' => $data['status'],
             'notes'  => $data['notes'] ?? null,
         ];
+
+        // Enforce sequential milestone completion: all previous milestones must be completed
+        if ($data['status'] === 'completed' && $milestone->milestone_number > 1) {
+            $incompletePreviousMilestones = $installation->milestones()
+                ->where('milestone_number', '<', $milestone->milestone_number)
+                ->where('status', '!=', 'completed')
+                ->count();
+                
+            if ($incompletePreviousMilestones > 0) {
+                return redirect()->back()->with('error', 'You cannot complete this milestone because previous steps are still pending or in progress.');
+            }
+        }
 
         if ($data['status'] === 'completed') {
             $updateData['completed_at'] = now();
@@ -93,38 +144,40 @@ class InstallationController extends Controller
                 'completed_date' => now(),
             ]);
 
-            // Auto-generate GST Invoice
-            $exists = \App\Models\GstInvoice::where('installation_id', $installation->id)->exists();
-            if (!$exists && $installation->quote) {
-                $quote = $installation->quote;
-                $subtotal = $quote->subtotal;
-                $discount = $quote->discount;
-                $taxableValue = $subtotal - $discount;
-                
-                $cgstRate = $quote->tax_rate / 2.0;
-                $cgstAmount = $taxableValue * ($cgstRate / 100);
-                $sgstRate = $quote->tax_rate / 2.0;
-                $sgstAmount = $taxableValue * ($sgstRate / 100);
-                
-                \App\Models\GstInvoice::create([
-                    'company_id'      => $installation->company_id,
-                    'customer_id'     => $installation->customer_id,
-                    'quote_id'        => $quote->id,
-                    'installation_id' => $installation->id,
-                    'invoice_number'  => \App\Models\GstInvoice::generateNumber($installation->company_id),
-                    'invoice_date'    => now(),
-                    'subtotal'        => $subtotal,
-                    'discount'        => $discount,
-                    'taxable_value'   => $taxableValue,
-                    'cgst_rate'       => $cgstRate,
-                    'cgst_amount'     => $cgstAmount,
-                    'sgst_rate'       => $sgstRate,
-                    'sgst_amount'     => $sgstAmount,
-                    'total_gst'       => $cgstAmount + $sgstAmount,
-                    'grand_total'     => $quote->total,
-                    'status'          => 'unpaid',
-                ]);
-            }
+            // Auto-generate GST Invoice with a transaction to prevent invoice number race conditions
+            \Illuminate\Support\Facades\DB::transaction(function () use ($installation, $data) {
+                $exists = \App\Models\GstInvoice::where('installation_id', $installation->id)->lockForUpdate()->exists();
+                if (!$exists && $installation->quote) {
+                    $quote = $installation->quote;
+                    $subtotal = $quote->subtotal;
+                    $discount = $quote->discount;
+                    $taxableValue = $subtotal - $discount;
+                    
+                    $cgstRate = $quote->tax_rate / 2.0;
+                    $cgstAmount = $taxableValue * ($cgstRate / 100);
+                    $sgstRate = $quote->tax_rate / 2.0;
+                    $sgstAmount = $taxableValue * ($sgstRate / 100);
+                    
+                    \App\Models\GstInvoice::create([
+                        'company_id'      => $installation->company_id,
+                        'customer_id'     => $installation->customer_id,
+                        'quote_id'        => $quote->id,
+                        'installation_id' => $installation->id,
+                        'invoice_number'  => \App\Models\GstInvoice::generateNumber($installation->company_id),
+                        'invoice_date'    => now(),
+                        'subtotal'        => $subtotal,
+                        'discount'        => $discount,
+                        'taxable_value'   => $taxableValue,
+                        'cgst_rate'       => $cgstRate,
+                        'cgst_amount'     => $cgstAmount,
+                        'sgst_rate'       => $sgstRate,
+                        'sgst_amount'     => $sgstAmount,
+                        'total_gst'       => $cgstAmount + $sgstAmount,
+                        'grand_total'     => $quote->total,
+                        'status'          => 'unpaid',
+                    ]);
+                }
+            });
         }
 
         return redirect()->route('installations.show', $installation)->with('success', 'Milestone updated.');
@@ -134,13 +187,25 @@ class InstallationController extends Controller
     {
         $company = $this->tenantRequired();
         $customers = Customer::orderBy('name')->get();
+        $leads     = Lead::with('customer')->where('stage', 'won')->get();
+        $quotes    = Quote::with('customer')->where('status', 'accepted')->get();
         $users     = User::where('company_id', $company->id)->get();
-        return view('installations.edit', compact('installation', 'customers', 'users'));
+        return view('installations.edit', compact('installation', 'customers', 'leads', 'quotes', 'users'));
     }
 
     public function update(Request $request, Installation $installation)
     {
+        $company = $this->tenantRequired();
+
         $data = $request->validate([
+            'lead_id'        => [
+                'nullable',
+                \Illuminate\Validation\Rule::exists('leads', 'id')->where('company_id', $company->id)
+            ],
+            'quote_id'       => [
+                'nullable',
+                \Illuminate\Validation\Rule::exists('quotes', 'id')->where('company_id', $company->id)
+            ],
             'status'         => 'required|in:scheduled,in_progress,completed,cancelled',
             'scheduled_date' => 'nullable|date',
             'completed_date' => 'nullable|date',
@@ -149,7 +214,10 @@ class InstallationController extends Controller
             'inverter_brand' => 'nullable|string|max:100',
             'panel_count'    => 'nullable|integer',
             'notes'          => 'nullable|string',
-            'assigned_user_id' => 'nullable|exists:users,id',
+            'assigned_user_id' => [
+                'nullable',
+                \Illuminate\Validation\Rule::exists('users', 'id')->where('company_id', $company->id)
+            ],
         ]);
         $installation->update($data);
         return redirect()->route('installations.show', $installation)->with('success', 'Installation updated.');

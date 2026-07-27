@@ -37,7 +37,17 @@ class GstInvoice extends Model
 
     public static function generateNumber(int $companyId): string
     {
-        $last = static::withoutGlobalScopes()->where('company_id', $companyId)->count();
-        return 'INV-' . date('Y') . '-' . str_pad($companyId, 3, '0', STR_PAD_LEFT) . '-' . str_pad($last + 1, 4, '0', STR_PAD_LEFT);
+        $last = static::withoutGlobalScopes()
+            ->where('company_id', $companyId)
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $nextNumber = 1;
+        if ($last && $last->invoice_number) {
+            $parts = explode('-', $last->invoice_number);
+            $nextNumber = intval(end($parts)) + 1;
+        }
+
+        return 'INV-' . date('Y') . '-' . str_pad($companyId, 3, '0', STR_PAD_LEFT) . '-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
     }
 }

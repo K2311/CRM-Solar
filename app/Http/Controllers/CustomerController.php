@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
+    use \App\Traits\HasTenant;
     public function index(Request $request)
     {
         $query = Customer::query();
@@ -32,10 +33,23 @@ class CustomerController extends Controller
 
     public function store(Request $request)
     {
+        $company = $this->tenantRequired();
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'nullable|email',
-            'phone' => 'nullable|string|max:30',
+            'email' => [
+                'required_without:phone',
+                'nullable',
+                'email',
+                \Illuminate\Validation\Rule::unique('customers')->where('company_id', $company->id)
+            ],
+            'phone' => [
+                'required_without:email',
+                'nullable',
+                'string',
+                'max:30',
+                \Illuminate\Validation\Rule::unique('customers')->where('company_id', $company->id)
+            ],
             'address' => 'nullable|string',
             'city' => 'nullable|string|max:100',
             'state' => 'nullable|string|max:100',
@@ -43,6 +57,11 @@ class CustomerController extends Controller
             'source' => 'nullable|string|max:100',
             'notes' => 'nullable|string',
             'status' => 'required|in:prospect,active,inactive',
+        ], [
+            'email.required_without' => 'Please provide either an Email Address or a Phone Number.',
+            'phone.required_without' => 'Please provide either an Email Address or a Phone Number.',
+            'email.unique' => 'A customer with this email already exists.',
+            'phone.unique' => 'A customer with this phone number already exists.',
         ]);
         Customer::create($data);
         return redirect()->route('customers.index')->with('success', 'Customer created successfully.');
@@ -61,10 +80,27 @@ class CustomerController extends Controller
 
     public function update(Request $request, Customer $customer)
     {
+        $company = $this->tenantRequired();
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'nullable|email',
-            'phone' => 'nullable|string|max:30',
+            'email' => [
+                'required_without:phone',
+                'nullable',
+                'email',
+                \Illuminate\Validation\Rule::unique('customers')
+                    ->where('company_id', $company->id)
+                    ->ignore($customer->id)
+            ],
+            'phone' => [
+                'required_without:email',
+                'nullable',
+                'string',
+                'max:30',
+                \Illuminate\Validation\Rule::unique('customers')
+                    ->where('company_id', $company->id)
+                    ->ignore($customer->id)
+            ],
             'address' => 'nullable|string',
             'city' => 'nullable|string|max:100',
             'state' => 'nullable|string|max:100',
@@ -72,6 +108,11 @@ class CustomerController extends Controller
             'source' => 'nullable|string|max:100',
             'notes' => 'nullable|string',
             'status' => 'required|in:prospect,active,inactive',
+        ], [
+            'email.required_without' => 'Please provide either an Email Address or a Phone Number.',
+            'phone.required_without' => 'Please provide either an Email Address or a Phone Number.',
+            'email.unique' => 'A customer with this email already exists.',
+            'phone.unique' => 'A customer with this phone number already exists.',
         ]);
         $customer->update($data);
         return redirect()->route('customers.show', $customer)->with('success', 'Customer updated.');

@@ -15,8 +15,10 @@ class PaymentController extends Controller
     {
         $query = Payment::with('customer', 'quote');
         if ($request->customer_id) $query->where('customer_id', $request->customer_id);
+        
+        $totalCollected = (clone $query)->sum('amount');
         $payments = $query->orderBy('payment_date', 'desc')->paginate(20)->withQueryString();
-        $totalCollected = Payment::sum('amount');
+        
         return view('payments.index', compact('payments', 'totalCollected'));
     }
 
@@ -38,9 +40,17 @@ class PaymentController extends Controller
 
     public function store(Request $request)
     {
+        $company = $this->tenantRequired();
+        
         $data = $request->validate([
-            'customer_id'  => 'required|exists:customers,id',
-            'quote_id'     => 'nullable|exists:quotes,id',
+            'customer_id'  => [
+                'required',
+                \Illuminate\Validation\Rule::exists('customers', 'id')->where('company_id', $company->id)
+            ],
+            'quote_id'     => [
+                'nullable',
+                \Illuminate\Validation\Rule::exists('quotes', 'id')->where('company_id', $company->id)
+            ],
             'amount'       => 'required|numeric|min:0.01',
             'method'       => 'required|in:cash,bank_transfer,cheque,card,online',
             'reference'    => 'nullable|string|max:255',
@@ -49,7 +59,6 @@ class PaymentController extends Controller
             'receipt_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
 
-        $company = $this->tenantRequired();
         $data['company_id'] = $company->id;
 
         if ($request->hasFile('receipt_file')) {
@@ -67,6 +76,47 @@ class PaymentController extends Controller
         }
 
         return redirect()->route('payments.index')->with('success', 'Payment recorded.');
+    }
+
+    public function edit(Payment $payment)
+    {
+        $customers = Customer::orderBy('name')->get();
+        $quotes = Quote::with('customer')->whereIn('status', ['sent', 'accepted'])->get();
+        
+        $selectedCustomer = $payment->customer;
+        $selectedQuote = $payment->quote;
+        
+        return view('payments.edit', compact('payment', 'customers', 'quotes', 'selectedCustomer', 'selectedQuote'));
+    }
+
+    public function update(Request $request, Payment $payment)
+    {
+        $company = $this->tenantRequired();
+        
+        $data = $request->validate([
+            'customer_id'  => [
+                'required',
+                \Illuminate\Validation\Rule::exists('customers', 'id')->where('company_id', $company->id)
+            ],
+            'quote_id'     => [
+                'nullable',
+                \Illuminate\Validation\Rule::exists('quotes', 'id')->where('company_id', $company->id)
+            ],
+            'amount'       => 'required|numeric|min:0.01',
+            'method'       => 'required|in:cash,bank_transfer,cheque,card,online',
+            'reference'    => 'nullable|string|max:255',
+            'payment_date' => 'required|date',
+            'notes'        => 'nullable|string',
+            'receipt_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+        ]);
+
+        if ($request->hasFile('receipt_file')) {
+            $data['receipt_file'] = $request->file('receipt_file')->store('receipts', 'public');
+        }
+
+        $payment->update($data);
+
+        return redirect()->route('payments.index')->with('success', 'Payment updated.');
     }
 
     public function destroy(Payment $payment)

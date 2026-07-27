@@ -83,7 +83,7 @@
                                 <div class="card glass-card" style="padding: 1rem;">
                                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                                         <span style="font-weight: 700; text-transform: uppercase; font-size: 0.75rem; color: var(--primary);">{{ $activity->type }}</span>
-                                        <span style="font-size: 0.75rem; color: var(--text-muted);">{{ $activity->created_at->diffForHumans() }} by {{ $activity->user->name }}</span>
+                                        <span style="font-size: 0.75rem; color: var(--text-muted);">{{ $activity->created_at->diffForHumans() }} by {{ $activity->user->name ?? 'System' }}</span>
                                     </div>
                                     <p style="font-size: 0.93rem;">{{ $activity->description }}</p>
                                 </div>

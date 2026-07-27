@@ -43,6 +43,15 @@ class PublishScheduledCampaigns extends Command
 
         foreach ($campaigns as $campaign) {
             try {
+                // Atomically reserve the campaign to prevent race conditions (duplicate emails)
+                $updated = Campaign::where('id', $campaign->id)
+                    ->where('status', 'draft')
+                    ->update(['status' => 'sending', 'sent_at' => now()]);
+
+                if (!$updated) {
+                    continue; // Another worker already picked it up
+                }
+
                 $dispatcher->dispatch($campaign);
                 $this->info("Dispatched campaign: {$campaign->id}");
             } catch (\Exception $e) {

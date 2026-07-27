@@ -18,7 +18,7 @@ class Permission extends Model
             'tickets'       => ['view', 'create', 'edit', 'delete', 'assign'],
             'products'      => ['view', 'create', 'edit', 'delete'],
             'payments'      => ['view', 'create', 'edit', 'delete'],
-            'marketing'     => ['view', 'create', 'send', 'delete'],
+            'marketing'     => ['view', 'create', 'edit', 'send', 'delete'],
             'reports'       => ['view', 'export'],
             'settings'      => ['view', 'edit'],
             'team'          => ['view', 'invite', 'edit_roles', 'remove'],

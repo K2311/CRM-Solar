@@ -282,10 +282,32 @@
                             <i class="bi bi-sun"></i>
                         </div>
                         <div>
-                            <h3 style="font-size: 1.1rem; font-weight: 800;">State Subsidy Slab Configuration</h3>
-                            <p style="color: var(--text-muted); font-size: 0.75rem;">Configure subsidy calculation for your state.</p>
+                            <h3 style="font-size: 1.1rem; font-weight: 800;">Subsidy Configuration</h3>
+                            <p style="color: var(--text-muted); font-size: 0.75rem;">Configure central and state subsidy calculations.</p>
                         </div>
                     </div>
+
+                    <h4 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">Central Subsidy (PM Surya Ghar)</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label">Tier 1 Max kW (e.g. 2)</label>
+                            <input type="number" name="settings[central_subsidy_tier1_max_kw]" class="form-control" value="{{ $settings['central_subsidy_tier1_max_kw'] ?? '2' }}" step="1">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label">Tier 1 Rate per kW (e.g. 30000)</label>
+                            <input type="number" name="settings[central_subsidy_tier1_rate]" class="form-control" value="{{ $settings['central_subsidy_tier1_rate'] ?? '30000' }}" step="1">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label">Tier 2 Max kW (e.g. 3)</label>
+                            <input type="number" name="settings[central_subsidy_tier2_max_kw]" class="form-control" value="{{ $settings['central_subsidy_tier2_max_kw'] ?? '3' }}" step="1">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label">Tier 2 Rate per kW (e.g. 18000)</label>
+                            <input type="number" name="settings[central_subsidy_tier2_rate]" class="form-control" value="{{ $settings['central_subsidy_tier2_rate'] ?? '18000' }}" step="1">
+                        </div>
+                    </div>
+
+                    <h4 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">State Subsidy Slab</h4>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-group" style="margin: 0;">

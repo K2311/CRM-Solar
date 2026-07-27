@@ -68,6 +68,13 @@
                             @if(auth()->user()->canDo('customers.edit'))
                             <a href="{{ route('customers.edit', $customer) }}" class="btn btn-outline" style="padding: 0.4rem; border-radius: 0.5rem;"><i class="bi bi-pencil"></i></a>
                             @endif
+                            @if(auth()->user()->canDo('customers.delete'))
+                            <form action="{{ route('customers.destroy', $customer) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this customer?');" style="display:inline;">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-outline" style="padding: 0.4rem; border-radius: 0.5rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.2);"><i class="bi bi-trash"></i></button>
+                            </form>
+                            @endif
                         </div>
                     </td>
                 </tr>

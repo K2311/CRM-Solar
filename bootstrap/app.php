@@ -16,6 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'can.do' => \App\Http\Middleware\CheckPermission::class,
             'check.subscription' => \App\Http\Middleware\CheckSubscription::class,
             'check.plan' => \App\Http\Middleware\CheckPlanLimits::class,
+            'auto.authorize' => \App\Http\Middleware\AutoAuthorize::class,
+        ]);
+        
+        $middleware->web(append: [
+            \App\Http\Middleware\AutoAuthorize::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

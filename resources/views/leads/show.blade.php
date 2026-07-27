@@ -57,6 +57,16 @@
                                 <span style="color: var(--text-muted);">Close Probability</span>
                                 <span style="font-weight: 600;">{{ $lead->stage === 'won' ? '100' : ($lead->stage === 'lost' ? '0' : '65') }}%</span>
                             </div>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+                                <span style="color: var(--text-muted); white-space: nowrap;">Interested Products</span>
+                                <div style="display: flex; flex-wrap: wrap; gap: 0.25rem; justify-content: flex-end;">
+                                    @forelse($lead->products as $product)
+                                        <span class="badge" style="background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main); font-size: 0.7rem;">{{ $product->name }}</span>
+                                    @empty
+                                        <span style="color: var(--text-muted); font-size: 0.8rem;">None selected</span>
+                                    @endforelse
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div>

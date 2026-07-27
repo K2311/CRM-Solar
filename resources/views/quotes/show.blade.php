@@ -21,6 +21,17 @@
                 background: white !important;
                 color: black !important;
             }
+            .avoid-break {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+            table {
+                page-break-inside: auto !important;
+            }
+            tr {
+                page-break-inside: avoid !important;
+                page-break-after: auto !important;
+            }
         }
     </style>
 
@@ -62,19 +73,29 @@
             </div>
         </div>
 
-        <div style="margin-bottom: 3rem; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem;">
-            <div>
-                <h4 style="color: #999; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 1rem; border-bottom: 2px solid #eee;">Bill To</h4>
+        <div style="margin-bottom: 3rem; display: flex; gap: 4rem; width: 100%;">
+            <div style="flex: 1;">
+                <h4 style="color: #999; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 1rem; border-bottom: 2px solid #eee; padding-bottom: 0.5rem;">Bill To</h4>
                 <div style="font-size: 1.1rem; font-weight: 700;">{{ $quote->customer->name }}</div>
-                <div style="color: #666; white-space: pre-line; margin-top: 0.5rem;">{{ $quote->customer->address }}</div>
-                <div style="color: #666;">{{ $quote->customer->phone }} | {{ $quote->customer->email }}</div>
+                @if($quote->customer->address)
+                    <div style="color: #666; white-space: pre-line; margin-top: 0.5rem;">{{ $quote->customer->address }}</div>
+                @endif
+                @if($quote->customer->phone || $quote->customer->email)
+                    <div style="color: #666; margin-top: 0.5rem;">
+                        {{ $quote->customer->phone }}
+                        @if($quote->customer->phone && $quote->customer->email) | @endif
+                        {{ $quote->customer->email }}
+                    </div>
+                @endif
             </div>
             @if($quote->lead)
-            <div>
-                <h4 style="color: #999; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 1rem; border-bottom: 2px solid #eee;">Project Details</h4>
+            <div style="flex: 1;">
+                <h4 style="color: #999; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 1rem; border-bottom: 2px solid #eee; padding-bottom: 0.5rem;">Project Details</h4>
                 <div style="font-size: 1rem; font-weight: 700;">{{ $quote->lead->title }}</div>
                 <div style="color: #666; margin-top: 0.5rem; font-size: 0.875rem;">{{ $quote->lead->notes }}</div>
             </div>
+            @else
+            <div style="flex: 1;"></div>
             @endif
         </div>
 
@@ -102,7 +123,7 @@
             </tbody>
         </table>
 
-        <div style="display: flex; justify-content: flex-end;">
+        <div class="avoid-break" style="display: flex; justify-content: flex-end;">
             <div style="width: 300px; display: flex; flex-direction: column; gap: 0.75rem;">
                 <div style="display: flex; justify-content: space-between;">
                     <span style="color: #999; font-weight: 700; text-transform: uppercase; font-size: 0.75rem;">Subtotal</span>
@@ -142,18 +163,18 @@
         </div>
 
         <!-- Payment Schedule -->
-        <div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid #eee;">
+        <div class="avoid-break" style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid #eee;">
             <h4 style="color: #999; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 1rem;">Payment Milestone Schedule</h4>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem; background: #f9fafb; padding: 1.5rem; border-radius: 0.75rem;">
-                <div>
+            <div style="display: flex; gap: 2rem; background: #f9fafb; padding: 1.5rem; border-radius: 0.75rem;">
+                <div style="flex: 1;">
                     <span style="color: #666; font-size: 0.8rem; display: block; margin-bottom: 0.25rem;">1. Booking Advance ({{ number_format($quote->advance_milestone_pct) }}%)</span>
                     <span style="font-size: 1.1rem; font-weight: 700;">{{ $currentCompany->currency_symbol }}{{ number_format(($quote->has_subsidy ? $quote->net_cost : $quote->total) * ($quote->advance_milestone_pct / 100), 2) }}</span>
                 </div>
-                <div>
+                <div style="flex: 1;">
                     <span style="color: #666; font-size: 0.8rem; display: block; margin-bottom: 0.25rem;">2. Material Delivery ({{ number_format($quote->delivery_milestone_pct) }}%)</span>
                     <span style="font-size: 1.1rem; font-weight: 700;">{{ $currentCompany->currency_symbol }}{{ number_format(($quote->has_subsidy ? $quote->net_cost : $quote->total) * ($quote->delivery_milestone_pct / 100), 2) }}</span>
                 </div>
-                <div>
+                <div style="flex: 1;">
                     <span style="color: #666; font-size: 0.8rem; display: block; margin-bottom: 0.25rem;">3. Commissioning ({{ number_format($quote->commissioning_milestone_pct) }}%)</span>
                     <span style="font-size: 1.1rem; font-weight: 700;">{{ $currentCompany->currency_symbol }}{{ number_format(($quote->has_subsidy ? $quote->net_cost : $quote->total) * ($quote->commissioning_milestone_pct / 100), 2) }}</span>
                 </div>
@@ -161,7 +182,7 @@
         </div>
 
         @if($quote->notes)
-        <div style="margin-top: 4rem; padding: 2rem; background: #f9fafb; border-radius: 1rem; font-size: 0.875rem;">
+        <div class="avoid-break" style="margin-top: 4rem; padding: 2rem; background: #f9fafb; border-radius: 1rem; font-size: 0.875rem;">
             <h4 style="color: #999; font-weight: 700; text-transform: uppercase; margin-bottom: 0.5rem; font-size: 0.75rem;">Terms & Conditions</h4>
             <div style="color: #666; line-height: 1.6;">{{ $quote->notes }}</div>
         </div>

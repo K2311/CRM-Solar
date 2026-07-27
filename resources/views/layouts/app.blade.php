@@ -210,14 +210,13 @@
         @if($errors->any())
             CrmSwal.fire({
                 icon: 'error',
-                title: 'Please fix the following errors',
-                html: '<ul style="text-align:left;padding-left:1.2rem;">' +
-                    @foreach($errors->all() as $error)
-                        '<li>{{ addslashes($error) }}</li>' +
-                    @endforeach
-                    '</ul>',
+                title: 'Validation Error',
+                html: '<ul style="text-align: left; font-size: 0.9rem; margin-top: 1rem; color: #ef4444;">@foreach($errors->all() as $error)<li>{{ addslashes($error) }}</li>@endforeach</ul>',
+                confirmButtonText: 'Okay',
             });
         @endif
+
+
 
             // Global delete-confirm helper
             function swalDelete(btn, msg) {

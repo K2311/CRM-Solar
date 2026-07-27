@@ -10,7 +10,7 @@
     </div>
 
     <div style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); display: grid; gap: 1.5rem;">
-        @foreach($products as $product)
+        @forelse($products as $product)
         <div class="card glass-card">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
                 <div style="padding: 0.5rem; background: rgba(14, 165, 233, 0.1); border-radius: 0.75rem; color: var(--primary);">
@@ -37,7 +37,16 @@
                 </div>
             </div>
         </div>
-        @endforeach
+        @empty
+        <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 2rem; background: var(--bg-surface); border: 1px dashed var(--border); border-radius: 1rem;">
+            <i class="bi bi-box-seam" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem; display: block;"></i>
+            <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">No Products Found</h3>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">You haven't added any products to your catalog yet.</p>
+            @if(auth()->user()->canDo('products.create'))
+            <a href="{{ route('products.create') }}" class="btn btn-primary">Add Your First Product</a>
+            @endif
+        </div>
+        @endforelse
     </div>
 
     <div style="margin-top: 2rem;">

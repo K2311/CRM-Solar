@@ -112,9 +112,9 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('templatePreview', () => ({
-                channel: '{{ old('channel', 'email') }}',
-                subject: '{{ old('subject') }}',
-                body: `{!! addslashes(old('body')) !!}`,
+                channel: @json(old('channel', 'email')),
+                subject: @json(old('subject')),
+                body: @json(old('body', '')),
                 
                 get previewBody() {
                     const content = this.body || 'Enter your template content to see a preview...';
