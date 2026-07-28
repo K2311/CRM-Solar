@@ -63,6 +63,22 @@ class CampaignDispatcher
         $campaign->update(['status' => 'sent', 'sent_count' => $sent, 'failed_count' => $failed]);
     }
 
+    public function retry(Campaign $campaign): void
+    {
+        $company = $campaign->company;
+        $campaign->update(['status' => 'sending']);
+
+        $failedContacts = $campaign->contacts()->where('status', 'failed')->get();
+
+        foreach ($failedContacts as $cc) {
+            $this->sendToContact($campaign, $company, $cc);
+        }
+
+        $sent   = $campaign->contacts()->where('status', 'sent')->count();
+        $failed = $campaign->contacts()->where('status', 'failed')->count();
+        $campaign->update(['status' => 'sent', 'sent_count' => $sent, 'failed_count' => $failed]);
+    }
+
     private function buildContacts(Campaign $campaign, Company $company)
     {
         return match($campaign->segment) {

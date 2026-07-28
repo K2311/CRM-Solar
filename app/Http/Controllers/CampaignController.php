@@ -79,4 +79,11 @@ class CampaignController extends Controller
         $dispatcher->dispatch($campaign);
         return redirect()->route('campaigns.show', $campaign)->with('success', 'Campaign sent successfully!');
     }
+
+    public function retry(Campaign $campaign, CampaignDispatcher $dispatcher)
+    {
+        abort_if($campaign->failed_count === 0, 400, 'No failed contacts to retry.');
+        $dispatcher->retry($campaign);
+        return redirect()->route('campaigns.show', $campaign)->with('success', 'Failed contacts have been retried!');
+    }
 }

@@ -76,6 +76,16 @@
                             </form>
                             @endif
 
+                            @if($campaign->status === 'sent' && $campaign->failed_count > 0)
+                            <form action="{{ route('campaigns.retry', $campaign) }}" method="POST">
+                                @csrf
+                                <button type="button" class="btn btn-outline" style="padding: 0.4rem; border-color: #f59e0b; color: #f59e0b;"
+                                    onclick="swalConfirm(this, 'Retry Failed', 'Retry sending to {{ $campaign->failed_count }} failed recipients?', 'Yes, Retry!')" title="Retry Failed">
+                                    <i class="bi bi-arrow-repeat"></i>
+                                </button>
+                            </form>
+                            @endif
+
                             <form action="{{ route('campaigns.destroy', $campaign) }}" method="POST">
                                 @csrf
                                 @method('DELETE')

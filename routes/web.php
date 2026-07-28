@@ -87,6 +87,7 @@ Route::middleware('auth')->group(function () {
         Route::group(['prefix' => 'marketing'], function () {
             Route::resource('campaigns', CampaignController::class);
             Route::post('campaigns/{campaign}/send', [CampaignController::class, 'send'])->name('campaigns.send');
+            Route::post('campaigns/{campaign}/retry', [CampaignController::class, 'retry'])->name('campaigns.retry');
             Route::resource('templates', MarketingTemplateController::class);
         });
 
