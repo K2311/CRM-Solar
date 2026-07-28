@@ -22,7 +22,13 @@ class FacebookService
                 'message'      => $message,
                 'access_token' => $token,
             ]);
-            return $response->successful();
+
+            if (!$response->successful()) {
+                \Log::error("Facebook API Error: " . $response->body());
+                return false;
+            }
+
+            return true;
         } catch (\Exception $e) {
             \Log::error("Facebook post failed: " . $e->getMessage());
             return false;
