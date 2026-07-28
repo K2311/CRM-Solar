@@ -3,10 +3,20 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
             <div>
                 <h1 style="font-size: 1.875rem; font-weight: 800; margin-bottom: 0.5rem;">Site Survey Report</h1>
+                @if($siteSurvey->lead)
                 <p style="color: var(--text-muted);">Lead: <a href="{{ route('leads.show', $siteSurvey->lead_id) }}" style="color: var(--primary); text-decoration: underline;">{{ $siteSurvey->lead->title }}</a></p>
+                @elseif($siteSurvey->customer)
+                <p style="color: var(--text-muted);">Customer: <a href="{{ route('customers.show', $siteSurvey->customer_id) }}" style="color: var(--primary); text-decoration: underline;">{{ $siteSurvey->customer->name }}</a></p>
+                @endif
             </div>
             <div style="display: flex; gap: 1rem;">
+                @if($siteSurvey->lead)
                 <a href="{{ route('leads.show', $siteSurvey->lead_id) }}" class="btn btn-outline"><i class="bi bi-arrow-left"></i> Back to Lead</a>
+                @elseif($siteSurvey->customer)
+                <a href="{{ route('customers.show', $siteSurvey->customer_id) }}" class="btn btn-outline"><i class="bi bi-arrow-left"></i> Back to Customer</a>
+                @else
+                <a href="{{ route('surveys.index') }}" class="btn btn-outline"><i class="bi bi-arrow-left"></i> Back to Surveys</a>
+                @endif
                 <a href="{{ route('surveys.edit', $siteSurvey) }}" class="btn btn-primary"><i class="bi bi-pencil"></i> Edit Survey</a>
             </div>
         </div>
@@ -86,7 +96,7 @@
                         </div>
                         <div>
                             <span style="color: var(--text-muted); display: block;">Customer</span>
-                            <span style="font-weight: 600;">{{ $siteSurvey->customer->name }}</span>
+                            <span style="font-weight: 600;">{{ $siteSurvey->customer->name ?? ($siteSurvey->lead->title ?? 'N/A') }}</span>
                         </div>
                         <hr style="border: 0; border-top: 1px solid var(--border); margin: 0.5rem 0;">
                         <form action="{{ route('surveys.destroy', $siteSurvey) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this survey report?');">
