@@ -47,6 +47,7 @@ Route::middleware('auth')->group(function () {
         Route::get('billing/expired', [\App\Http\Controllers\BillingController::class, 'expired'])->name('billing.expired');
 
         // Customer Module
+        Route::get('customers/{customer}/check-delete', [CustomerController::class, 'checkDelete'])->name('customers.check-delete');
         Route::resource('customers', CustomerController::class);
         
         // Lead Module

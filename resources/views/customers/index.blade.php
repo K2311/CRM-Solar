@@ -69,11 +69,10 @@
                             <a href="{{ route('customers.edit', $customer) }}" class="btn btn-outline" style="padding: 0.4rem; border-radius: 0.5rem;"><i class="bi bi-pencil"></i></a>
                             @endif
                             @if(auth()->user()->canDo('customers.delete'))
-                            <form action="{{ route('customers.destroy', $customer) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this customer?');" style="display:inline;">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-outline" style="padding: 0.4rem; border-radius: 0.5rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.2);"><i class="bi bi-trash"></i></button>
-                            </form>
+                            <button type="button" class="btn btn-outline" style="padding: 0.4rem; border-radius: 0.5rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.2);"
+                                onclick="confirmCustomerDelete({{ $customer->id }})">
+                                <i class="bi bi-trash"></i>
+                            </button>
                             @endif
                         </div>
                     </td>
@@ -86,4 +85,48 @@
             {{ $customers->links() }}
         </div>
     </div>
+
+@push('scripts')
+<script>
+function confirmCustomerDelete(customerId) {
+    fetch(`/customers/${customerId}/check-delete`, {
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.canDelete) {
+            const c = data.counts;
+            CrmSwal.fire({
+                icon: 'error',
+                title: 'Cannot Delete',
+                html: `This customer has <strong>${c.leads}</strong> Leads, <strong>${c.quotes}</strong> Quotes, <strong>${c.installations}</strong> Installations, and <strong>${c.serviceTickets}</strong> Service Tickets.<br><br>Please delete these records first.`,
+                confirmButtonText: 'Understood',
+            });
+        } else {
+            CrmSwal.fire({
+                title: 'Delete this customer?',
+                text: 'This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel',
+            }).then(result => {
+                if (result.isConfirmed) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/customers/${customerId}`;
+                    form.innerHTML = `@csrf @method('DELETE')`;
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        }
+    })
+    .catch(() => {
+        CrmSwal.fire({ icon: 'error', title: 'Error', text: 'Could not verify customer records. Please try again.' });
+    });
+}
+</script>
+@endpush
+
 </x-app-layout>

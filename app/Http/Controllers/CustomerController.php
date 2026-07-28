@@ -118,6 +118,23 @@ class CustomerController extends Controller
         return redirect()->route('customers.show', $customer)->with('success', 'Customer updated.');
     }
 
+    public function checkDelete(Customer $customer)
+    {
+        $counts = [
+            'leads'           => $customer->leads()->count(),
+            'quotes'          => $customer->quotes()->count(),
+            'installations'   => $customer->installations()->count(),
+            'serviceTickets'  => $customer->serviceTickets()->count(),
+        ];
+
+        $hasRelated = array_sum($counts) > 0;
+
+        return response()->json([
+            'canDelete' => !$hasRelated,
+            'counts'    => $counts,
+        ]);
+    }
+
     public function destroy(Customer $customer)
     {
         $leads = $customer->leads()->count();
