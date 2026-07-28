@@ -9,8 +9,12 @@ class FacebookService
 {
     public function post(Company $company, string $message): bool
     {
-        $token  = $company->setting('meta_access_token');
-        $pageId = $company->setting('meta_page_id');
+        $socialAccount = \App\Models\SocialAccount::where('company_id', $company->id)
+                            ->where('provider', 'facebook')
+                            ->first();
+
+        $token  = $socialAccount?->page_token ?? $socialAccount?->token;
+        $pageId = $socialAccount?->page_id;
 
         if (!$token || !$pageId) {
             \Log::warning("Facebook post skipped — Meta credentials missing for company {$company->id}");

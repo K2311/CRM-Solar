@@ -9,8 +9,12 @@ class InstagramService
 {
     public function post(Company $company, string $message): bool
     {
-        $token    = $company->setting('meta_access_token');
-        $igAccId  = $company->setting('meta_ig_business_id');
+        $socialAccount = \App\Models\SocialAccount::where('company_id', $company->id)
+                            ->where('provider', 'facebook')
+                            ->first();
+
+        $token    = $socialAccount?->page_token ?? $socialAccount?->token;
+        $igAccId  = $socialAccount?->instagram_account_id;
 
         if (!$token || !$igAccId) {
             \Log::warning("Instagram post skipped — Meta IG credentials missing for company {$company->id}");
