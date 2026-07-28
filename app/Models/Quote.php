@@ -33,6 +33,7 @@ class Quote extends Model
     public function lead() { return $this->belongsTo(Lead::class); }
     public function items() { return $this->hasMany(QuoteItem::class); }
     public function payments() { return $this->hasMany(Payment::class); }
+    public function installations() { return $this->hasMany(Installation::class); }
 
     public function recalculate(): void
     {

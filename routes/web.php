@@ -59,6 +59,7 @@ Route::middleware('auth')->group(function () {
         
         // Quote Module
         Route::post('quotes/{quote}/send', [QuoteController::class, 'send'])->name('quotes.send');
+        Route::get('quotes/{quote}/check-delete', [QuoteController::class, 'checkDelete'])->name('quotes.check-delete');
         Route::resource('quotes', QuoteController::class);
         
         // Installation Module

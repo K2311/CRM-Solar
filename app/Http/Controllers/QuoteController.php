@@ -190,8 +190,29 @@ class QuoteController extends Controller
         return redirect()->route('quotes.show', $quote)->with('success', 'Quote updated.');
     }
 
+    public function checkDelete(Quote $quote)
+    {
+        $counts = [
+            'installations' => $quote->installations()->count(),
+            'payments'      => $quote->payments()->count(),
+        ];
+
+        return response()->json([
+            'canDelete' => array_sum($counts) === 0,
+            'counts'    => $counts,
+        ]);
+    }
+
     public function destroy(Quote $quote)
     {
+        $installations = $quote->installations()->count();
+        $payments      = $quote->payments()->count();
+
+        if ($installations || $payments) {
+            return redirect()->route('quotes.show', $quote)
+                ->with('error', "Cannot delete quote. This quote has {$installations} Installations and {$payments} Payments. Please delete these records first.");
+        }
+
         $quote->delete();
         return redirect()->route('quotes.index')->with('success', 'Quote deleted.');
     }
