@@ -67,7 +67,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('installations', InstallationController::class);
         
         // Site Survey Module
-        Route::resource('surveys', SiteSurveyController::class);
+        Route::resource('surveys', SiteSurveyController::class)->parameters(['surveys' => 'siteSurvey']);
         
         // Service Ticket Module
         Route::resource('tickets', ServiceTicketController::class);
