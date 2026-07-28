@@ -39,7 +39,7 @@
                                 </div>
                                 <div>
                                     <a href="{{ route('customers.show', $customer) }}"
-                                        style="font-weight: 600; ">{{ $customer->name }}</a>
+                                        style="font-weight: 600; color: var(--text-main);">{{ $customer->name }}</a>
                                     <div style="font-size: 0.75rem; color: var(--text-muted);">ID:
                                         CSR-{{ str_pad($customer->id, 4, '0', STR_PAD_LEFT) }}</div>
                                 </div>
