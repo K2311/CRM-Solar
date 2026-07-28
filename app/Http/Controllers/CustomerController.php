@@ -120,6 +120,16 @@ class CustomerController extends Controller
 
     public function destroy(Customer $customer)
     {
+        $leads = $customer->leads()->count();
+        $quotes = $customer->quotes()->count();
+        $installations = $customer->installations()->count();
+        $serviceTickets = $customer->serviceTickets()->count();
+
+        if ($leads || $quotes || $installations || $serviceTickets) {
+            return redirect()->route('customers.show', $customer)
+                ->with('error', "Cannot delete customer. This customer has {$leads} Leads, {$quotes} Quotes, {$installations} Installations, and {$serviceTickets} Service Tickets. Please delete these records first.");
+        }
+
         $customer->delete();
         return redirect()->route('customers.index')->with('success', 'Customer deleted.');
     }
