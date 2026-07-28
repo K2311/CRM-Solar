@@ -64,15 +64,26 @@
                     </td>
                     <td style="text-align: right;">
                         <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                            <a href="{{ route('campaigns.show', $campaign) }}" class="btn btn-outline" style="padding: 0.4rem;"><i class="bi bi-graph-up"></i></a>
+                            <a href="{{ route('campaigns.show', $campaign) }}" class="btn btn-outline" style="padding: 0.4rem;" title="Analytics"><i class="bi bi-graph-up"></i></a>
+                            
                             @if($campaign->status === 'draft')
                             <form action="{{ route('campaigns.send', $campaign) }}" method="POST">
                                 @csrf
                                 <button type="button" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.75rem;"
-                                    onclick="swalConfirm(this, 'Dispatch Campaign', 'Send this campaign to all recipients now?', 'Yes, Send Now!')">
-                                    <i class="bi bi-send"></i> Send</button>
+                                    onclick="swalConfirm(this, 'Dispatch Campaign', 'Send this campaign to all recipients now?', 'Yes, Send Now!')" title="Send Campaign">
+                                    <i class="bi bi-send"></i> Send
+                                </button>
                             </form>
                             @endif
+
+                            <form action="{{ route('campaigns.destroy', $campaign) }}" method="POST">
+                                @csrf
+                                @method('DELETE')
+                                <button type="button" class="btn btn-outline" style="padding: 0.4rem; border-color: #ef4444; color: #ef4444;"
+                                    onclick="swalConfirm(this, 'Delete Campaign', 'Are you sure you want to delete this campaign? This cannot be undone.', 'Yes, Delete!')" title="Delete Campaign">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
                         </div>
                     </td>
                 </tr>
