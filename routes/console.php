@@ -12,3 +12,4 @@ Schedule::command('amc:check-expiry')->daily();
 Schedule::command('social:publish-scheduled')->everyMinute();
 Schedule::command('campaigns:publish-scheduled')->everyMinute();
 
+Schedule::command('installations:send-reminders')->dailyAt('08:00');

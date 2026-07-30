@@ -56,8 +56,8 @@ class PublishScheduledCampaigns extends Command
                 $this->info("Dispatched campaign: {$campaign->id}");
             } catch (\Exception $e) {
                 $this->error("Failed to dispatch campaign {$campaign->id}: " . $e->getMessage());
-                // Set status back to draft or failed so we know it didn't succeed,
-                // but CampaignDispatcher handles the internal contacts.
+                // Set status to failed so we know it didn't succeed
+                Campaign::where('id', $campaign->id)->update(['status' => 'failed']);
             }
         }
 

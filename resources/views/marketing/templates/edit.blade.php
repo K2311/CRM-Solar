@@ -11,6 +11,20 @@
         <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 2rem; align-items: start;">
             <!-- Form -->
             <div class="card">
+                
+                <!-- WhatsApp Meta Warning -->
+                <div x-show="channel === 'whatsapp'" class="animate-fade" style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 1rem; margin-bottom: 1.5rem; border-radius: 0.25rem;">
+                    <div style="display: flex; gap: 0.75rem;">
+                        <i class="bi bi-exclamation-triangle-fill" style="color: #f59e0b; font-size: 1.2rem;"></i>
+                        <div>
+                            <h4 style="color: #92400e; font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Meta Approval Required</h4>
+                            <p style="color: #b45309; font-size: 0.8rem; margin: 0;">
+                                To send campaigns via WhatsApp, this template <strong>must</strong> also be created and approved in your Meta Business Manager Dashboard with the exact same name. Unapproved templates will instantly fail to send.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
                 <form action="{{ route('templates.update', $template) }}" method="POST">
                     @csrf
                     @method('PATCH')
@@ -24,10 +38,7 @@
                             <label class="form-label">Channel</label>
                             <select name="channel" class="form-control" x-model="channel" required>
                                 <option value="email">Email</option>
-                                <option value="sms">SMS</option>
                                 <option value="whatsapp">WhatsApp</option>
-                                <option value="facebook">Facebook Post</option>
-                                <option value="instagram">Instagram Post</option>
                             </select>
                         </div>
                     </div>
@@ -41,6 +52,12 @@
                         <label class="form-label">Message Template</label>
                         <textarea name="body" class="form-control" rows="10" x-model="body" required>{{ old('body', $template->body) }}</textarea>
                         <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">Use {name}, {company}, {email}, {phone} as placeholders.</p>
+                        <p style="font-size: 0.75rem; color: #f59e0b; margin-top: 0.25rem;" x-show="channel === 'whatsapp'">
+                            <i class="bi bi-exclamation-triangle"></i> WhatsApp does not support HTML tags. Use <strong>*text*</strong> for bold and <strong>_text_</strong> for italics.
+                        </p>
+                        <p style="font-size: 0.75rem; color: #10b981; margin-top: 0.25rem;" x-show="channel === 'email'">
+                            <i class="bi bi-check-circle"></i> HTML formatting is fully supported for Emails.
+                        </p>
                     </div>
 
                     <div style="margin-bottom: 1.5rem;">
@@ -62,11 +79,11 @@
                 <h3 style="font-size: 0.875rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem;">Live Preview</h3>
                 
                 <!-- SMS / WhatsApp Frame -->
-                <div x-show="['sms', 'whatsapp'].includes(channel)" class="animate-fade">
+                <div x-show="channel === 'whatsapp'" class="animate-fade">
                     <div style="width: 280px; height: 500px; background: #000; border-radius: 2.5rem; border: 8px solid #334155; margin: 0 auto; position: relative; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
                         <div style="height: 60px; background: #1e293b; display: flex; align-items: center; padding: 0 1.5rem; gap: 0.75rem;">
-                            <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.75rem;">S</div>
-                            <div style="font-size: 0.8rem; font-weight: 600; color: white;" x-text="channel === 'sms' ? 'Solar CRM' : 'SolarTech WhatsApp'"></div>
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.75rem;">W</div>
+                            <div style="font-size: 0.8rem; font-weight: 600; color: white;">SolarTech WhatsApp</div>
                         </div>
                         <div style="padding: 1rem; display: flex; flex-direction: column; gap: 1rem; height: calc(100% - 60px); background: #0f172a;">
                             <div style="max-width: 85%; align-self: flex-start; background: #334155; padding: 0.75rem; border-radius: 1rem 1rem 1rem 0; font-size: 0.8rem; color: white; line-height: 1.4;">
@@ -82,37 +99,12 @@
                     <div style="background: white; border-radius: 0.75rem; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
                         <div style="padding: 1rem; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
                             <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 0.25rem;">Subject: <span style="color: #1e293b; font-weight: 600;" x-text="subject || '(No Subject)'"></span></div>
-                            <div style="font-size: 0.75rem; color: #64748b;">From: <span style="color: #1e293b; font-weight: 600;">{{ optional(auth()->user()->company)->name ?? 'Solar CRM' }} <{{ optional(auth()->user()->company)->email ?? 'noreply@solar-crm.com' }}></span></div>
+                            <div style="font-size: 0.75rem; color: #64748b;">From: <span style="color: #1e293b; font-weight: 600;">{{ optional(auth()->user()->company)->name ?? 'Solar CRM' }} &lt;{{ optional(auth()->user()->company)->email ?? 'noreply@solar-crm.com' }}&gt;</span></div>
                         </div>
                         <div style="padding: 2rem; min-height: 200px; color: #334155; font-size: 0.9rem; line-height: 1.6;">
                             <div x-html="previewBody"></div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Social Post Frame -->
-                <div x-show="['facebook', 'instagram'].includes(channel)" class="animate-fade">
-                    <div style="background: #1e293b; border-radius: 0.75rem; overflow: hidden; border: 1px solid var(--border);">
-                        <div style="padding: 1rem; display: flex; align-items: center; gap: 0.75rem;">
-                            <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; color: white;"><i :class="channel === 'facebook' ? 'bi bi-facebook' : 'bi bi-instagram'"></i></div>
-                            <div>
-                                <div style="font-size: 0.875rem; font-weight: 700; color: white;">{{ optional(auth()->user()->company)->name ?? 'Solar CRM' }}</div>
-                                <div style="font-size: 0.7rem; color: var(--text-muted);">Just now • <i class="bi bi-globe"></i></div>
-                            </div>
-                        </div>
-                        <div style="padding: 0 1rem 1rem 1rem; font-size: 0.93rem; color: white; line-height: 1.5;">
-                             <div x-html="previewBody"></div>
-                        </div>
-                        <div style="aspect-ratio: 16/9; background: #334155; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
-                            <i class="bi bi-image" style="font-size: 3rem; opacity: 0.3;"></i>
-                        </div>
-                        <div style="padding: 0.75rem 1rem; border-top: 1px solid var(--border); display: flex; gap: 1.5rem; color: var(--text-muted); font-size: 0.875rem;">
-                            <span><i class="bi bi-hand-thumbs-up"></i> Like</span>
-                            <span><i class="bi bi-chat"></i> Comment</span>
-                            <span><i class="bi bi-share"></i> Share</span>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>

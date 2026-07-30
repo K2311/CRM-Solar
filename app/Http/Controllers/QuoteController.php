@@ -132,6 +132,22 @@ class QuoteController extends Controller
         $data['has_subsidy'] = $hasSubsidy;
 
         $quote->update($data);
+
+        // Update items if they were provided in the request
+        if ($request->has('items') && is_array($request->items)) {
+            $quote->items()->delete();
+            foreach ($request->items as $item) {
+                \App\Models\QuoteItem::create([
+                    'quote_id'   => $quote->id,
+                    'product_id' => $item['product_id'] ?? null,
+                    'description'=> $item['description'],
+                    'qty'        => $item['qty'],
+                    'unit_price' => $item['unit_price'],
+                    'subtotal'   => $item['qty'] * $item['unit_price'],
+                ]);
+            }
+        }
+
         $quote->load('items');
         $quote->recalculate();
 
@@ -217,9 +233,43 @@ class QuoteController extends Controller
         return redirect()->route('quotes.index')->with('success', 'Quote deleted.');
     }
 
-    public function send(Quote $quote)
+    public function send(Quote $quote, \App\Services\Marketing\WhatsAppService $whatsappService)
     {
+        if (!$quote->public_token) {
+            $quote->generatePublicToken();
+        }
         $quote->update(['status' => 'sent']);
-        return redirect()->route('quotes.show', $quote)->with('success', 'Quote sent to client.');
+
+        $messages = ['Quote marked as sent. Shareable secure link generated.'];
+
+        if ($quote->customer) {
+            // Send Email
+            if ($quote->customer->email) {
+                try {
+                    \Illuminate\Support\Facades\Mail::to($quote->customer->email)->send(new \App\Mail\QuoteSentMail($quote));
+                    $messages[] = 'Email sent to ' . $quote->customer->email;
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("Failed to send quote email: " . $e->getMessage());
+                    $messages[] = 'Failed to send email.';
+                }
+            }
+
+            // Send WhatsApp
+            if ($quote->customer->phone) {
+                $link = route('public.quotes.show', $quote->public_token);
+                $body = "Hello {$quote->customer->name},\n\nWe have prepared a new proposal for you. You can review the details, costs, and digitally accept it securely at the link below:\n\n{$link}\n\nQuote Number: {$quote->quote_number}\nTotal: Rs " . number_format($quote->net_cost ?? $quote->total, 2) . "\n\nBest regards,\n" . ($quote->company->name ?? 'The Team');
+                
+                // Assuming WhatsApp API requires template or allows free-form text depending on 24h window. 
+                // We will attempt to send it as text.
+                $waSent = $whatsappService->send($quote->company, $quote->customer->phone, $body);
+                if ($waSent) {
+                    $messages[] = 'WhatsApp message sent to ' . $quote->customer->phone;
+                } else {
+                    $messages[] = 'Failed to send WhatsApp message.';
+                }
+            }
+        }
+        
+        return redirect()->route('quotes.show', $quote)->with('success', implode(' | ', $messages));
     }
 }

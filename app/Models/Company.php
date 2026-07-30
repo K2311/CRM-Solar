@@ -100,6 +100,16 @@ class Company extends Model
         };
     }
 
+    public function getCurrencyIconAttribute(): string
+    {
+        return match ($this->currency) {
+            'EUR' => 'bi-currency-euro',
+            'INR' => 'bi-currency-rupee',
+            'GBP' => 'bi-currency-pound',
+            default => 'bi-currency-dollar',
+        };
+    }
+
     public function settings(): HasMany
     {
         return $this->hasMany(CompanySetting::class);

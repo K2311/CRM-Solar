@@ -147,6 +147,13 @@
                             {{-- Actions --}}
                             <td style="text-align: right;">
                                 <div style="display: flex; gap: 0.375rem; justify-content: flex-end;">
+                                    @if(auth()->user()->canDo('marketing.view') && $lead->customer && $lead->customer->phone)
+                                        <a href="{{ route('chat.start.lead', $lead) }}" class="btn btn-outline"
+                                            style="width: 30px; height: 30px; padding: 0; color: #128c7e; border-color: rgba(18, 140, 126, 0.2); font-size: 0.8125rem;"
+                                            title="Start WhatsApp Chat">
+                                            <i class="bi bi-whatsapp"></i>
+                                        </a>
+                                    @endif
                                     <a href="{{ route('leads.show', $lead) }}" class="btn btn-outline"
                                         style="width: 30px; height: 30px; padding: 0; font-size: 0.8125rem;"
                                         title="View">

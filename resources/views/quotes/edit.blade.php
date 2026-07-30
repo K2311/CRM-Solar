@@ -48,7 +48,7 @@
                         <tbody>
                             @foreach($quote->items as $item)
                             <tr>
-                                <td>{{ $item->product->name }}</td>
+                                <td>{{ $item->product->name ?? $item->description ?? 'Custom Item' }}</td>
                                 <td>{{ $item->qty }}</td>
                                 <td>{{ number_format($item->unit_price, 2) }}</td>
                                 <td style="text-align: right;">{{ number_format($item->subtotal, 2) }}</td>

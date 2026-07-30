@@ -26,11 +26,20 @@
         <div class="card glass-card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(16, 185, 129, 0.1); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
-                    <i class="bi bi-currency-dollar"></i>
+                    <i class="bi {{ $currentCompany->currency_icon ?? 'bi-currency-dollar' }}"></i>
                 </div>
                 <span class="badge badge-success">Revenue</span>
             </div>
-            <div style="font-size: 1.8rem; font-weight: 800;">{{ number_format($totalRevenue, 2) }}</div>
+            @php
+                $formattedRevenue = $totalRevenue >= 1000000 
+                    ? number_format($totalRevenue / 1000000, 2) . 'M' 
+                    : ($totalRevenue >= 1000 
+                        ? number_format($totalRevenue / 1000, 1) . 'K' 
+                        : number_format($totalRevenue, 0));
+            @endphp
+            <div style="font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px;" title="{{ $currentCompany->currency_symbol }}{{ number_format($totalRevenue, 2) }}">
+                {{ $currentCompany->currency_symbol }}{{ $formattedRevenue }}
+            </div>
             <div style="color: var(--text-muted); font-size: 0.875rem;">Total Payments</div>
         </div>
 
@@ -204,7 +213,7 @@
                     @foreach($recentLeads as $lead)
                     <tr>
                         <td style="font-weight: 600;">{{ $lead->customer->name }}</td>
-                        <td style="color: var(--primary);">{{ number_format($lead->value, 2) }}</td>
+                        <td style="color: var(--primary);">{{ $currentCompany->currency_symbol }}{{ number_format($lead->value, 2) }}</td>
                         <td><span class="badge" style="background: {{ \App\Models\Lead::stageColors()[$lead->stage] ?? '#eee' }}; color: white; border: none;">{{ $lead->stage }}</span></td>
                     </tr>
                     @endforeach

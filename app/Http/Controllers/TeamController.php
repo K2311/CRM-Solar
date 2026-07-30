@@ -32,6 +32,7 @@ class TeamController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
+            'phone' => 'nullable|string|max:50',
             'role' => 'required|in:admin,member,sales,technician,accounts',
             'password' => 'required|string|min:6',
         ]);
@@ -40,6 +41,7 @@ class TeamController extends Controller
             'company_id' => $company->id,
             'name' => $request->name,
             'email' => $request->email,
+            'phone' => $request->phone,
             'password' => Hash::make($request->password),
             'role' => $request->role,
             'is_active' => true,
@@ -139,12 +141,14 @@ class TeamController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
+            'phone' => 'nullable|string|max:50',
             'role' => 'required|in:admin,member,sales,technician,accounts',
             'password' => 'nullable|string|min:6',
         ]);
 
         $user->name = $request->name;
         $user->email = $request->email;
+        $user->phone = $request->phone;
         $user->role = $request->role;
         
         if ($request->filled('password')) {

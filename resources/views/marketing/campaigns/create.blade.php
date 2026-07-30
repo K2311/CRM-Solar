@@ -1,5 +1,5 @@
 <x-app-layout title="Create Campaign">
-    <div style="max-width: 1200px; margin: 0 auto;" x-data="campaignPreview()">
+    <div style="max-width: 1200px; margin: 0 auto;" x-data="campaignCreator()">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
             <div>
                 <h1 style="font-size: 1.875rem; font-weight: 800; margin-bottom: 0.5rem;">New Marketing Campaign</h1>
@@ -11,9 +11,22 @@
         <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 2rem; align-items: start;">
             <!-- Form -->
             <div class="card">
-                <form action="{{ route('campaigns.store') }}" method="POST">
+                <!-- WhatsApp Warning -->
+                <div x-show="channel === 'whatsapp' && !selectedTemplateId" class="animate-fade" style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 1rem; margin-bottom: 1.5rem; border-radius: 0.25rem;">
+                    <div style="display: flex; gap: 0.75rem;">
+                        <i class="bi bi-exclamation-triangle-fill" style="color: #f59e0b; font-size: 1.2rem;"></i>
+                        <div>
+                            <h4 style="color: #92400e; font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Custom Message Restriction</h4>
+                            <p style="color: #b45309; font-size: 0.8rem; margin: 0;">
+                                You are typing a custom message. Due to WhatsApp's 24-hour rule, this will <strong>only</strong> be delivered to customers who have messaged you within the last 24 hours. To blast all leads/customers anytime, please select a Meta-approved <strong>Template</strong> from the dropdown below.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <form action="{{ route('campaigns.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
-                    
+
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
                         <div style="grid-column: span 2;">
                             <label class="form-label">Campaign Name</label>
@@ -24,30 +37,85 @@
                             <select name="channel" class="form-control" x-model="channel" required>
                                 <option value="email">Email</option>
                                 <option value="whatsapp">WhatsApp</option>
-                                <option value="sms">SMS (WhatsApp Text)</option>
-                                <option value="facebook">Facebook Post</option>
-                                <option value="instagram">Instagram Post</option>
                             </select>
                         </div>
                         <div>
                             <label class="form-label">Target Segment</label>
-                            <select name="segment" class="form-control" required>
-                                <option value="all">All Contacts</option>
-                                <option value="leads">Leads Only</option>
-                                <option value="customers">Customers Only</option>
+                            <select name="segment" class="form-control" x-model="segment" required>
+                                <optgroup label="Everything">
+                                    <option value="all">Everyone (All Leads & Customers)</option>
+                                    <option value="manual">Specific Contacts (Manual)</option>
+                                </optgroup>
+                                <optgroup label="Customers">
+                                    <option value="customers_all">All Customers</option>
+                                    <option value="customers_active">Active Customers Only</option>
+                                </optgroup>
+                                <optgroup label="Leads">
+                                    <option value="leads_all">All Leads</option>
+                                    <option value="leads_active">Active Leads (Not won/lost)</option>
+                                    <option value="leads_new">New Leads Only</option>
+                                    <option value="leads_engaged">Engaged Leads (Survey/Quote)</option>
+                                    <option value="leads_lost">Lost Leads (Re-engagement)</option>
+                                </optgroup>
                             </select>
                         </div>
                     </div>
 
+                    <!-- Manual Contacts Selection -->
+                    <div style="margin-bottom: 1.5rem;" x-show="segment === 'manual'">
+                        <label class="form-label">Select Specific Contacts</label>
+                        <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+                        <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+                        <div x-init="$nextTick(() => { new TomSelect($refs.contactSelect, { plugins: ['remove_button'], maxOptions: 50 }); })">
+                            <select x-ref="contactSelect" name="selected_contacts[]" class="form-control" multiple placeholder="Search contacts by name, email, or phone...">
+                                <optgroup label="Customers">
+                                @foreach($customers as $c)
+                                    <option value="customer_{{ $c->id }}">{{ $c->name }} ({{ $c->email ?? $c->phone }})</option>
+                                @endforeach
+                            </optgroup>
+                            <optgroup label="Leads">
+                                @foreach($leads as $l)
+                                    <option value="lead_{{ $l->id }}">{{ $l->name }} ({{ $l->email ?? $l->phone }})</option>
+                                @endforeach
+                            </optgroup>
+                        </select>
+                        </div>
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">Start typing to search contacts.</p>
+                    </div>
+
+                    <!-- Email subject -->
                     <div style="margin-bottom: 1.5rem;" x-show="channel === 'email'">
                         <label class="form-label">Subject Line</label>
                         <input type="text" name="subject" class="form-control" x-model="subject" placeholder="e.g. Special Offer on Solar Installation!">
                     </div>
 
                     <div style="margin-bottom: 1.5rem;">
-                        <label class="form-label">Message Body</label>
-                        <textarea name="body" class="form-control" rows="8" x-model="body" placeholder="Type your message here... Use {name} for personalization." required></textarea>
-                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">Available placeholders: {name}, {company}, {email}, {phone}</p>
+                        <label class="form-label">Use a Saved Template (Optional)</label>
+                        <select class="form-control" x-model="selectedTemplateId" @change="applyTemplate()">
+                            <option value="">-- Write Custom Message --</option>
+                            <template x-for="template in availableTemplates" :key="template.id">
+                                <option :value="template.id" x-text="template.name"></option>
+                            </template>
+                        </select>
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;" x-show="selectedTemplateId">Template applied! You can still edit the message below before sending.</p>
+                    </div>
+
+
+
+                    <div style="margin-bottom: 1.5rem;">
+                        <label class="form-label">Message / Caption</label>
+                        <textarea name="body" class="form-control" rows="6" x-model="body"
+                            placeholder="Type your message here... Use {name} for personalisation."
+                            required></textarea>
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                            Available placeholders: {name}, {company}, {email}, {phone}
+                        </p>
+                        <p style="font-size: 0.75rem; color: #f59e0b; margin-top: 0.25rem;" x-show="channel === 'whatsapp'">
+                            <i class="bi bi-exclamation-triangle"></i> WhatsApp does not support HTML tags. Use <strong>*text*</strong> for bold and <strong>_text_</strong> for italics.
+                        </p>
+                        <p style="font-size: 0.75rem; color: #10b981; margin-top: 0.25rem;" x-show="channel === 'email'">
+                            <i class="bi bi-check-circle"></i> HTML formatting is fully supported for Emails.
+                        </p>
                     </div>
 
                     <div style="display: flex; gap: 1rem; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 1.5rem;">
@@ -60,13 +128,13 @@
             <!-- Preview Sidebar -->
             <div style="position: sticky; top: 2rem;">
                 <h3 style="font-size: 0.875rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem;">Live Preview</h3>
-                
+
                 <!-- SMS / WhatsApp Frame -->
-                <div x-show="['sms', 'whatsapp'].includes(channel)" class="animate-fade">
+                <div x-show="channel === 'whatsapp'" class="animate-fade">
                     <div style="width: 280px; height: 500px; background: #000; border-radius: 2.5rem; border: 8px solid #334155; margin: 0 auto; position: relative; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
                         <div style="height: 60px; background: #1e293b; display: flex; align-items: center; padding: 0 1.5rem; gap: 0.75rem;">
-                            <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.75rem;">S</div>
-                            <div style="font-size: 0.8rem; font-weight: 600; color: white;" x-text="channel === 'sms' ? 'Solar CRM' : 'SolarTech WhatsApp'"></div>
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.75rem;">W</div>
+                            <div style="font-size: 0.8rem; font-weight: 600; color: white;">SolarTech WhatsApp</div>
                         </div>
                         <div style="padding: 1rem; display: flex; flex-direction: column; gap: 1rem; height: calc(100% - 60px); background: #0f172a;">
                             <div style="max-width: 85%; align-self: flex-start; background: #334155; padding: 0.75rem; border-radius: 1rem 1rem 1rem 0; font-size: 0.8rem; color: white; line-height: 1.4;">
@@ -90,48 +158,53 @@
                     </div>
                 </div>
 
-                <!-- Social Post Frame -->
-                <div x-show="['facebook', 'instagram'].includes(channel)" class="animate-fade">
-                    <div style="background: #1e293b; border-radius: 0.75rem; overflow: hidden; border: 1px solid var(--border);">
-                        <div style="padding: 1rem; display: flex; align-items: center; gap: 0.75rem;">
-                            <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; color: white;"><i :class="channel === 'facebook' ? 'bi bi-facebook' : 'bi bi-instagram'"></i></div>
-                            <div>
-                                <div style="font-size: 0.875rem; font-weight: 700; color: white;">{{ optional(auth()->user()->company)->name ?? 'Solar CRM' }}</div>
-                                <div style="font-size: 0.7rem; color: var(--text-muted);">Just now • <i class="bi bi-globe"></i></div>
-                            </div>
-                        </div>
-                        <div style="padding: 0 1rem 1rem 1rem; font-size: 0.93rem; color: white; line-height: 1.5;">
-                             <div x-text="body || 'Your post content will appear here...'"></div>
-                        </div>
-                        <div style="aspect-ratio: 16/9; background: #334155; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
-                            <i class="bi bi-image" style="font-size: 3rem; opacity: 0.3;"></i>
-                        </div>
-                        <div style="padding: 0.75rem 1rem; border-top: 1px solid var(--border); display: flex; gap: 1.5rem; color: var(--text-muted); font-size: 0.875rem;">
-                            <span><i class="bi bi-hand-thumbs-up"></i> Like</span>
-                            <span><i class="bi bi-chat"></i> Comment</span>
-                            <span><i class="bi bi-share"></i> Share</span>
-                        </div>
-                    </div>
-                </div>
+
+
             </div>
         </div>
     </div>
 
     <script>
         document.addEventListener('alpine:init', () => {
-            Alpine.data('campaignPreview', () => ({
-                name: '{{ old('name') }}',
-                channel: '{{ old('channel', 'email') }}',
-                subject: '{{ old('subject') }}',
-                body: '{{ old('body') }}',
+            const allTemplates = @json($templates);
+            
+            Alpine.data('campaignCreator', () => ({
+                name:          '{{ old('name') }}',
+                channel:       '{{ old('channel', 'email') }}',
+                segment:       '{{ old('segment', 'all') }}',
+                subject:       '{{ old('subject') }}',
+                body:          '{{ old('body') }}',
+                selectedTemplateId: '',
                 
+                get availableTemplates() {
+                    return allTemplates.filter(t => t.channel === this.channel);
+                },
+
+                applyTemplate() {
+                    if (!this.selectedTemplateId) return;
+                    const template = allTemplates.find(t => t.id == this.selectedTemplateId);
+                    if (template) {
+                        this.body = template.body;
+                        if (this.channel === 'email' && template.subject) {
+                            this.subject = template.subject;
+                        }
+                    }
+                },
+
                 get previewBody() {
                     if (!this.body) return 'Enter your message content to see a preview...';
+                    const company = '{{ optional(auth()->user()->company)->name ?? 'Solar CRM' }}';
                     return this.body
-                        .replace(/{name}/g, '<strong>[Customer Name]</strong>')
-                        .replace(/{company}/g, '<strong>{{ optional(auth()->user()->company)->name ?? 'Solar CRM' }}</strong>')
-                        .replace(/{email}/g, '<strong>[customer@example.com]</strong>')
-                        .replace(/{phone}/g, '<strong>[+1 555-0123]</strong>');
+                        .replace(/{name}/g,    '<strong>[Customer Name]</strong>')
+                        .replace(/{company}/g, `<strong>${company}</strong>`)
+                        .replace(/{email}/g,   '<strong>[customer@example.com]</strong>')
+                        .replace(/{phone}/g,   '<strong>[+91 98765-43210]</strong>');
+                },
+                
+                init() {
+                    this.$watch('channel', () => {
+                        this.selectedTemplateId = '';
+                    });
                 }
             }));
         });

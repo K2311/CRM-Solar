@@ -136,19 +136,28 @@
                         <label class="form-label">WhatsApp Business Account (WABA) ID</label>
                         <input type="text" name="settings[whatsapp_waba_id]" class="form-control" value="{{ $settings['whatsapp_waba_id'] ?? '' }}" placeholder="10482...">
                     </div>
+                    <div class="form-group">
+                        <label class="form-label">Webhook Verify Token</label>
+                        <input type="text" name="settings[whatsapp_verify_token]" class="form-control" value="{{ $settings['whatsapp_verify_token'] ?? '' }}" placeholder="Your secret verify string">
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-top: 2rem; margin-bottom: 2rem;">
+                        <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(66, 133, 244, 0.1); color: #4285F4; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                            <i class="bi bi-robot"></i>
+                        </div>
+                        <div>
+                            <h3 style="font-size: 1.1rem; font-weight: 800;">Google Gemini AI</h3>
+                            <p style="color: var(--text-muted); font-size: 0.75rem;">Connect Google Gemini for automated AI chat replies.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Gemini API Key</label>
+                        <input type="password" name="settings[gemini_api_key]" class="form-control" value="{{ $settings['gemini_api_key'] ?? '' }}" placeholder="AIzaSy...">
+                    </div>
                 </div>
 
                 <div class="card glass-card">
-                    <div class="card" style="background: rgba(24, 119, 242, 0.05); border: 1px solid rgba(24, 119, 242, 0.2); margin-bottom: 3rem; padding: 1.5rem;">
-                        <h4 style="font-size: 0.875rem; font-weight: 700; color: #1877f2; margin-bottom: 0.5rem;"><i class="bi bi-info-circle-fill"></i> Setup Guide</h4>
-                        <ul style="font-size: 0.75rem; color: var(--text-muted); padding-left: 1.25rem; line-height: 1.4;">
-                            <li>Go to <a href="https://developers.facebook.com" target="_blank" style="color: #1877f2; text-decoration: underline;">Meta for Developers</a>.</li>
-                            <li>Create a <b>Marketing App</b> and add <b>Marketing API</b> product.</li>
-                            <li>Generate a <b>System User Token</b> under App Settings > Advanced.</li>
-                            <li>Find your <b>Page ID</b> in the 'About' section of your Facebook Page.</li>
-                        </ul>
-                    </div>
-
                     <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
                         <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(24, 119, 242, 0.1); color: #1877f2; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
                             <i class="bi bi-facebook"></i>
@@ -158,20 +167,25 @@
                             <p style="color: var(--text-muted); font-size: 0.75rem;">Manage Facebook and Instagram integrations.</p>
                         </div>
                     </div>
+                    
+                    @if($socialAccount)
+                        <div style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 1rem; border-radius: 0.75rem; margin-bottom: 1rem;">
+                            <i class="bi bi-check-circle-fill"></i> Connected to Facebook (Page ID: {{ $socialAccount->page_id }})
+                        </div>
+                        @if($socialAccount->instagram_account_id)
+                            <div style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 1rem; border-radius: 0.75rem; margin-bottom: 1.5rem;">
+                                <i class="bi bi-check-circle-fill"></i> Connected to Instagram (Account ID: {{ $socialAccount->instagram_account_id }})
+                            </div>
+                        @endif
+                        <a href="{{ route('social.auth.facebook') }}" class="btn btn-primary">Reconnect Account</a>
+                    @else
+                        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Connect your Facebook account to enable publishing to your Facebook Page and linked Instagram Account.</p>
+                        <a href="{{ route('social.auth.facebook') }}" class="btn btn-primary">
+                            <i class="bi bi-facebook"></i> Connect Facebook
+                        </a>
+                    @endif
+                </div>
 
-                    <div class="form-group">
-                        <label class="form-label">System User Access Token</label>
-                        <input type="password" name="settings[meta_access_token]" class="form-control" value="{{ $settings['meta_access_token'] ?? '' }}" placeholder="EAAE...">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Facebook Page ID</label>
-                        <input type="text" name="settings[meta_page_id]" class="form-control" value="{{ $settings['meta_page_id'] ?? '' }}" placeholder="109837...">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Instagram Business ID</label>
-                        <input type="text" name="settings[meta_ig_business_id]" class="form-control" value="{{ $settings['meta_ig_business_id'] ?? '' }}" placeholder="178414...">
-                    </div>
-                    </div>
                 </div>
             </div>
 

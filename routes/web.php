@@ -21,6 +21,21 @@ use App\Http\Controllers\TeamController;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
+// Webhook Routes (No CSRF, No Auth)
+Route::group(['prefix' => 'webhook'], function () {
+    Route::get('whatsapp', [\App\Http\Controllers\Webhook\WhatsAppWebhookController::class, 'verify']);
+    Route::post('whatsapp', [\App\Http\Controllers\Webhook\WhatsAppWebhookController::class, 'handle'])->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+});
+
+// Public Quotes
+Route::get('quotes/view/{token}', [\App\Http\Controllers\PublicQuoteController::class, 'show'])->name('public.quotes.show');
+Route::post('quotes/view/{token}/accept', [\App\Http\Controllers\PublicQuoteController::class, 'accept'])->name('public.quotes.accept');
+
+// Public Legal & Support Pages
+Route::get('meta-setup-guide', [\App\Http\Controllers\PublicPagesController::class, 'metaSetupGuide'])->name('public.meta-setup');
+Route::get('privacy-policy', [\App\Http\Controllers\PublicPagesController::class, 'privacyPolicy'])->name('public.privacy');
+Route::get('terms-of-service', [\App\Http\Controllers\PublicPagesController::class, 'termsOfService'])->name('public.terms');
+
 // Auth Routes
 Route::middleware('guest')->group(function () {
     Route::get('register', [RegisterController::class, 'showForm'])->name('register');
@@ -63,6 +78,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('quotes', QuoteController::class);
         
         // Installation Module
+        Route::post('installations/{installation}/send-reminder', [InstallationController::class, 'sendReminder'])->name('installations.send-reminder');
         Route::post('installations/{installation}/milestones/{milestone}', [InstallationController::class, 'updateMilestone'])->name('installations.milestone.update');
         Route::resource('installations', InstallationController::class);
         
@@ -89,6 +105,17 @@ Route::middleware('auth')->group(function () {
             Route::post('campaigns/{campaign}/send', [CampaignController::class, 'send'])->name('campaigns.send');
             Route::post('campaigns/{campaign}/retry', [CampaignController::class, 'retry'])->name('campaigns.retry');
             Route::resource('templates', MarketingTemplateController::class);
+            
+            // Chat UI
+            Route::get('chat', [\App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
+            Route::get('chat/start/{customer}', [\App\Http\Controllers\ChatController::class, 'startChat'])->name('chat.start');
+            Route::get('chat/start-lead/{lead}', [\App\Http\Controllers\ChatController::class, 'startLeadChat'])->name('chat.start.lead');
+            Route::get('chat/{conversation}', [\App\Http\Controllers\ChatController::class, 'show']);
+            Route::post('chat/{conversation}/toggle-ai', [\App\Http\Controllers\ChatController::class, 'toggleAi']);
+            Route::post('chat/{conversation}/send', [\App\Http\Controllers\ChatController::class, 'send']);
+            
+            // Simulator
+            Route::post('simulator/chat', [\App\Http\Controllers\SimulatorController::class, 'chat'])->name('simulator.chat');
         });
 
         // Settings & Team

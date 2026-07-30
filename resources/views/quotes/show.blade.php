@@ -7,6 +7,7 @@
             .main-content {
                 margin-left: 0 !important;
                 padding: 0 !important;
+                width: 100% !important;
             }
             .page-container {
                 padding: 0 !important;
@@ -48,14 +49,32 @@
             @if(in_array($quote->status, ['sent', 'accepted']))
             <a href="{{ route('payments.create', ['quote_id' => $quote->id]) }}" class="btn btn-outline"><i class="bi bi-credit-card"></i> Record Payment</a>
             @endif
-            @if($quote->status === 'draft')
+            @if(in_array($quote->status, ['draft', 'sent']))
             <form action="{{ route('quotes.send', $quote) }}" method="POST">
                 @csrf
-                <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> Send to Client</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-send"></i> 
+                    {{ $quote->status === 'sent' ? 'Resend to Client' : 'Send to Client' }}
+                </button>
             </form>
             @endif
         </div>
     </div>
+
+    @if($quote->public_token)
+    <div class="no-print" style="margin-bottom: 2rem; padding: 1.5rem; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <div style="font-weight: 600; color: #0369a1; margin-bottom: 0.25rem;"><i class="bi bi-link-45deg"></i> Secure Public Link</div>
+            <div style="font-size: 0.9rem; color: #0c4a6e;">Share this secure URL with your client so they can view and digitally accept this proposal.</div>
+            <div style="margin-top: 0.75rem; background: #fff; padding: 0.5rem 1rem; border: 1px solid #7dd3fc; border-radius: 4px; font-family: monospace;">
+                <a href="{{ route('public.quotes.show', $quote->public_token) }}" target="_blank" style="color: #0ea5e9; text-decoration: none;">
+                    {{ route('public.quotes.show', $quote->public_token) }}
+                </a>
+            </div>
+        </div>
+        <button onclick="navigator.clipboard.writeText('{{ route('public.quotes.show', $quote->public_token) }}'); Swal.fire({toast:true, position:'top-end', icon:'success', title:'Link copied!', showConfirmButton:false, timer:2000});" class="btn btn-primary" style="background: #0284c7; border: none;"><i class="bi bi-clipboard"></i> Copy Link</button>
+    </div>
+    @endif
 
     <div class="card" style="padding: 3rem; background: #fff; color: #000; border: none; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
         <div style="display: flex; justify-content: space-between; margin-bottom: 4rem;">

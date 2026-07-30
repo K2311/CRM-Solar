@@ -59,8 +59,21 @@ class SocialMediaService
                     $endpoint = '/video_stories';
                     $payload['video_url'] = $mediaUrl;
                 } else {
+                    // Step 1: Upload photo as unpublished story asset
+                    $upload = Http::post(self::BASE_URL . '/' . $account->page_id . '/photos', [
+                        'url'           => $mediaUrl,
+                        'published'     => false,
+                        'temporary'     => true,
+                        'access_token'  => $account->page_token,
+                    ]);
+
+                    if ($upload->failed()) {
+                        throw new Exception('Facebook story upload failed: ' . $upload->body());
+                    }
+
+                    $photoId = $upload->json('id');
                     $endpoint = '/photo_stories';
-                    $payload['url'] = $mediaUrl;
+                    $payload['photo_id'] = $photoId;
                 }
                 unset($payload['message']); // FB Stories don't use standard message fields in API
             } elseif ($postType === 'reel' || $isVideo) {

@@ -15,10 +15,12 @@ class Quote extends Model
         'valid_until', 'notes', 'subtotal', 'discount', 'tax_rate', 'tax_amount', 'total',
         'advance_milestone_pct', 'delivery_milestone_pct', 'commissioning_milestone_pct',
         'has_subsidy', 'central_subsidy', 'state_subsidy', 'net_cost',
+        'public_token', 'accepted_at', 'signature_data', 'client_ip',
     ];
 
     protected $casts = [
         'valid_until' => 'date',
+        'accepted_at' => 'datetime',
         'has_subsidy' => 'boolean',
         'advance_milestone_pct' => 'decimal:2',
         'delivery_milestone_pct' => 'decimal:2',
@@ -93,5 +95,13 @@ class Quote extends Model
         }
 
         return 'QT-' . str_pad($companyId, 3, '0', STR_PAD_LEFT) . '-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+    }
+
+    public function generatePublicToken(): string
+    {
+        if (!$this->public_token) {
+            $this->update(['public_token' => \Illuminate\Support\Str::random(32)]);
+        }
+        return $this->public_token;
     }
 }

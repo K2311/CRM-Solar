@@ -15,7 +15,8 @@ class SettingsController extends Controller
     {
         $company = $this->tenantRequired();
         $settings = $company->settings->pluck('value', 'key');
-        return view('settings.index', compact('company', 'settings'));
+        $socialAccount = \App\Models\SocialAccount::where('company_id', $company->id)->first();
+        return view('settings.index', compact('company', 'settings', 'socialAccount'));
     }
 
     public function update(Request $request)

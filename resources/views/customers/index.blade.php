@@ -90,6 +90,13 @@
                             {{-- Actions --}}
                             <td style="text-align: right;">
                                 <div style="display: flex; justify-content: flex-end; gap: 0.375rem;">
+                                    @if(auth()->user()->canDo('marketing.view'))
+                                        <a href="{{ route('chat.start', $customer) }}" class="btn btn-outline"
+                                            style="width: 30px; height: 30px; padding: 0; color: #128c7e; border-color: rgba(18, 140, 126, 0.2); font-size: 0.8125rem;"
+                                            title="Start WhatsApp Chat">
+                                            <i class="bi bi-whatsapp"></i>
+                                        </a>
+                                    @endif
                                     <a href="{{ route('customers.show', $customer) }}" class="btn btn-outline"
                                         style="width: 30px; height: 30px; padding: 0; font-size: 0.8125rem;" title="View">
                                         <i class="bi bi-eye"></i>

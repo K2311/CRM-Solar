@@ -94,7 +94,7 @@ class DatabaseSeeder extends Seeder
         // 4. Other Seeders
         $this->call([
             ProductSeeder::class,
-            CustomerSeeder::class,
+            DemoDataSeeder::class,
             MarketingSeeder::class,
         ]);
     }

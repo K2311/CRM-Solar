@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'Solar CRM' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -94,6 +95,10 @@
                 <a href="{{ route('social.index') }}" class="nav-item {{ request()->routeIs('social.*') ? 'active' : '' }}">
                     <i class="bi bi-share"></i> Social Media
                 </a>
+                
+                <a href="{{ route('chat.index') }}" class="nav-item {{ request()->routeIs('chat.*') ? 'active' : '' }}">
+                    <i class="bi bi-chat-dots"></i> Chat Inbox
+                </a>
                 @endif
 
                 <div style="margin-top: 2rem; padding: 0 1rem; font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
@@ -156,6 +161,12 @@
                     <h2 style="font-size: 1.1rem; font-weight: 600;">{{ $title ?? 'Dashboard' }}</h2>
                 </div>
                 <div class="navbar-right" style="display: flex; align-items: center; gap: 1.5rem;">
+                    @if(true)
+                        <button onclick="toggleAiSimulator()" class="btn btn-outline" style="border-radius: 50px; padding: 0.4rem 1rem; border: 1px solid var(--primary); color: var(--primary); display: flex; align-items: center; gap: 0.5rem; background: transparent; cursor: pointer;">
+                            <i class="bi bi-robot"></i> AI Simulator
+                        </button>
+                    @endif
+
                     @if(session('impersonate_company_id'))
                     <form action="{{ route('admin.stop-impersonating') }}" method="POST">
                         @csrf
@@ -243,5 +254,7 @@
         }).then(result => { if (result.isConfirmed) form.submit(); });
     }
     </script>
+    
+    @include('components.ai-simulator')
 </body>
 </html>

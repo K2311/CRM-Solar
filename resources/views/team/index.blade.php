@@ -84,6 +84,11 @@
                 </div>
                 
                 <div class="form-group">
+                    <label class="form-label">Phone / WhatsApp</label>
+                    <input type="text" name="phone" class="form-control" placeholder="+1234567890">
+                </div>
+                
+                <div class="form-group">
                     <label class="form-label">Password</label>
                     <input type="password" name="password" class="form-control" required minlength="6">
                 </div>
@@ -130,6 +135,11 @@
                         <div class="form-group">
                             <label class="form-label">Email Address</label>
                             <input type="email" name="email" x-model="editUser.email" class="form-control" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Phone / WhatsApp</label>
+                            <input type="text" name="phone" x-model="editUser.phone" class="form-control" placeholder="+1234567890">
                         </div>
                         
                         <div class="form-group">

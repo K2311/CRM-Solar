@@ -544,4 +544,8 @@ select.form-control {
         text-align: center !important;
         display: inline-flex !important;
     }
+
+    .hide-on-mobile {
+        display: none !important;
+    }
 }

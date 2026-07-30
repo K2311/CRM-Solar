@@ -22,7 +22,7 @@ class MarketingTemplateController extends Controller
     {
         $data = $request->validate([
             'name'     => 'required|string|max:255',
-            'channel'  => 'required|in:sms,whatsapp,email,facebook,instagram',
+            'channel'  => 'required|in:whatsapp,email',
             'subject'  => 'nullable|string|max:255',
             'body'     => 'required|string',
             'variables'=> 'nullable|array',
@@ -42,7 +42,7 @@ class MarketingTemplateController extends Controller
     {
         $data = $request->validate([
             'name'     => 'required|string|max:255',
-            'channel'  => 'required|in:sms,whatsapp,email,facebook,instagram',
+            'channel'  => 'required|in:whatsapp,email',
             'subject'  => 'nullable|string|max:255',
             'body'     => 'required|string',
             'variables'=> 'nullable|array',

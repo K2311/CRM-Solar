@@ -59,11 +59,11 @@ class PublishScheduledPosts extends Command
                 $igId = null;
 
                 if (in_array($post->platform, ['facebook', 'both'])) {
-                    $fbId = $socialMediaService->publishToFacebook($account, $post->content, $post->media_urls);
+                    $fbId = $socialMediaService->publishToFacebook($account, $post->content, $post->media_urls, $post->post_type);
                 }
 
                 if (in_array($post->platform, ['instagram', 'both'])) {
-                    $igId = $socialMediaService->publishToInstagram($account, $post->content ?? '', $post->media_urls);
+                    $igId = $socialMediaService->publishToInstagram($account, $post->content ?? '', $post->media_urls, $post->post_type);
                 }
 
                 $post->update([

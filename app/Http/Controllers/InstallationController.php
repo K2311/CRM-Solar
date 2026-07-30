@@ -228,4 +228,36 @@ class InstallationController extends Controller
         $installation->delete();
         return redirect()->route('installations.index')->with('success', 'Installation deleted.');
     }
+
+    public function sendReminder(Installation $installation, \App\Services\Marketing\WhatsAppService $whatsAppService)
+    {
+        $this->tenantRequired();
+        
+        if (!$installation->assignedUser || !$installation->assignedUser->phone) {
+            return redirect()->back()->with('error', 'Assigned user does not have a phone number configured.');
+        }
+
+        $now = \Carbon\Carbon::now()->startOfDay();
+        $scheduled = \Carbon\Carbon::parse($installation->scheduled_date)->startOfDay();
+        
+        $customerName = $installation->customer ? ($installation->customer->first_name . ' ' . $installation->customer->last_name) : 'Unknown';
+        $sysSize = $installation->system_size_kw ?? 'N/A';
+        $dateStr = $scheduled->format('M d, Y');
+
+        if ($scheduled->equalTo($now)) {
+            $body = "Hi {$installation->assignedUser->name},\n\nReminder: You have an installation scheduled for TODAY!\n\nCustomer: {$customerName}\nSystem Size: {$sysSize} kW\n\nPlease arrive on time and update the milestone progress in the CRM.\n\nGood luck!";
+        } elseif ($scheduled->equalTo($now->copy()->addDay())) {
+            $body = "Hi {$installation->assignedUser->name},\n\nThis is a reminder that you have an installation scheduled for TOMORROW ({$dateStr}).\n\nCustomer: {$customerName}\nSystem Size: {$sysSize} kW\n\nPlease ensure you have all necessary materials prepared.";
+        } else {
+            $body = "Hi {$installation->assignedUser->name},\n\nReminder for your upcoming installation scheduled on {$dateStr}.\n\nCustomer: {$customerName}\nSystem Size: {$sysSize} kW\n\nPlease check the CRM for any new updates.";
+        }
+
+        try {
+            $whatsAppService->send($installation->company, $installation->assignedUser->phone, $body);
+            return redirect()->back()->with('success', 'Reminder sent successfully via WhatsApp.');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Failed to send WhatsApp reminder: " . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to send WhatsApp reminder.');
+        }
+    }
 }

@@ -22,7 +22,7 @@ return [
         ]
     ],
     'enterprise' => [
-        'name' => 'Enterprise Enterprise Plan',
+        'name' => 'Enterprise Plan',
         'price' => 149, // USD per month
         'user_limit' => 999, // unlimited
         'lead_limit' => 99999, // unlimited

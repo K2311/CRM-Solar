@@ -112,6 +112,12 @@
         </div>
     </div>
 
+    @if($quotes->hasPages())
+        <div style="margin-top: 1.5rem;">
+            {{ $quotes->links() }}
+        </div>
+    @endif
+
     @push('scripts')
         <script>
             function confirmQuoteDelete(quoteId) {

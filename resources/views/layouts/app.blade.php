@@ -4,18 +4,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'Solar CRM' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ filemtime(public_path('css/app.css')) }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @stack('styles')
     @stack('head_scripts')
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        @media (max-width: 768px) {
+            body, html, .app-container {
+                overflow-x: hidden;
+            }
+            .hide-on-mobile {
+                display: none !important;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -102,6 +113,14 @@
                     </a>
                 @endif
 
+                @if(true)
+                    <a href="{{ route('chat.index') }}"
+                        class="nav-item {{ request()->routeIs('chat.*') ? 'active' : '' }}">
+                        <i class="bi bi-chat-dots"></i> Chat Inbox
+                    </a>
+                @endif
+
+
                 <div
                     style="margin-top: 2rem; padding: 0 1rem; font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
                     System
@@ -142,20 +161,28 @@
         <!-- Main Content -->
         <main class="main-content">
             <header class="navbar">
-                <div class="navbar-left">
-                    <h2 style="font-size: 1.1rem; font-weight: 600;">{{ $title ?? 'Dashboard' }}</h2>
+                <div class="navbar-left" style="display: flex; align-items: center; gap: 1rem;">
+                    <button class="mobile-menu-toggle" style="display: none; background: transparent; border: none; cursor: pointer; font-size: 1.5rem; padding: 0;" onclick="document.querySelector('.sidebar').classList.add('sidebar-open'); if(!document.querySelector('.sidebar-overlay')){let overlay = document.createElement('div'); overlay.className='sidebar-overlay'; overlay.onclick = () => {document.querySelector('.sidebar').classList.remove('sidebar-open'); overlay.remove()}; document.body.appendChild(overlay);}">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h2 style="font-size: 1.1rem; font-weight: 600; margin: 0;">{{ $title ?? 'Dashboard' }}</h2>
                 </div>
-                <div class="navbar-right" style="display: flex; align-items: center; gap: 1.5rem;">
+                <div class="navbar-right" style="display: flex; align-items: center; gap: 1rem;">
+                    @if(true)
+                        <button onclick="toggleAiSimulator()" class="btn btn-outline" style="border-radius: 50px; padding: 0.4rem 0.75rem; border: 1px solid var(--primary); color: var(--primary); display: flex; align-items: center; gap: 0.5rem; background: transparent; cursor: pointer; white-space: nowrap;">
+                            <i class="bi bi-robot"></i> <span class="hide-on-mobile">AI Simulator</span>
+                        </button>
+                    @endif
+
                     @if(session('impersonate_company_id'))
                         <form action="{{ route('admin.stop-impersonating') }}" method="POST">
                             @csrf
-                            <button class="badge badge-danger" style="border: none; cursor: pointer;">Exit
-                                Impersonation</button>
+                            <button class="badge badge-danger" style="border: none; cursor: pointer;">Exit</button>
                         </form>
                     @endif
 
                     <div class="user-badge" style="display: flex; align-items: center; gap: 0.75rem;">
-                        <div class="text-right">
+                        <div class="text-right hide-on-mobile">
                             <div style="font-size: 0.875rem; font-weight: 600;">{{ auth()->user()->name }}</div>
                             <div style="font-size: 0.75rem; color: var(--text-muted);">
                                 {{ $currentCompany->name ?? 'System' }}</div>
@@ -244,6 +271,6 @@
             }).then(result => { if (result.isConfirmed) form.submit(); });
         }
     </script>
+    @include('components.ai-simulator')
 </body>
-
 </html>

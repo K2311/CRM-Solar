@@ -85,15 +85,18 @@
                     <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 1rem;">Visual Preview</div>
                     
                     @if(in_array($campaign->channel, ['sms', 'whatsapp']))
-                        <div style="background: #0f172a; padding: 1rem; border-radius: 1rem; border: 1px solid var(--border);">
-                             <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
-                                <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--primary); font-size: 0.6rem; display: flex; align-items: center; justify-content: center;">S</div>
-                                <span style="font-size: 0.75rem; font-weight: 600;">{{ $campaign->channel === 'sms' ? 'Solar CRM' : 'SolarTech WhatsApp' }}</span>
-                             </div>
-                             <div style="background: #334155; padding: 0.75rem; border-radius: 1rem 1rem 1rem 0; font-size: 0.85rem; color: white; max-width: 90%; line-height: 1.4;">
-                                {!! nl2br(e($campaign->body)) !!}
-                             </div>
+                        <div style="width: 280px; height: 400px; background: #000; border-radius: 2.5rem; border: 8px solid #334155; margin: 0 auto; position: relative; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2);">
+                            <div style="height: 60px; background: #1e293b; display: flex; align-items: center; padding: 0 1.5rem; gap: 0.75rem;">
+                                <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.75rem;">{{ $campaign->channel === 'sms' ? 'S' : 'W' }}</div>
+                                <div style="font-size: 0.8rem; font-weight: 600; color: white;">{{ $campaign->channel === 'sms' ? 'Solar CRM' : 'SolarTech WhatsApp' }}</div>
+                            </div>
+                            <div style="padding: 1rem; display: flex; flex-direction: column; gap: 1rem; height: calc(100% - 60px); background: #0f172a;">
+                                <div style="max-width: 85%; align-self: flex-start; background: #334155; padding: 0.75rem; border-radius: 1rem 1rem 1rem 0; font-size: 0.8rem; color: white; line-height: 1.4;">
+                                    {!! nl2br(e($campaign->body)) !!}
+                                </div>
+                            </div>
                         </div>
+                        <p style="text-align: center; font-size: 0.75rem; color: var(--text-muted); margin-top: 1rem;">Mobile Device Mockup</p>
                     @elseif($campaign->channel === 'email')
                         <div style="background: white; border-radius: 0.75rem; border: 1px solid #e2e8f0; overflow: hidden; color: #334155;">
                             <div style="padding: 0.75rem 1rem; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 0.75rem;">

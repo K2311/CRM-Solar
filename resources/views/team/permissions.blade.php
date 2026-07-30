@@ -51,7 +51,7 @@
                              @if($user->id !== auth()->id() && $user->role !== 'owner')
                              <form action="{{ route('team.destroy', $user) }}" method="POST" style="display: inline;">
                                  @csrf @method('DELETE')
-                                 <button class="btn" style="color: #ef4444; padding: 0.4rem;"><i class="bi bi-trash"></i></button>
+                                 <button type="button" @click="Swal.fire({ title: 'Remove User?', text: 'This will permanently remove this member from your team.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Yes, remove them' }).then((r) => { if(r.isConfirmed) $el.closest('form').submit() })" class="btn" style="color: #ef4444; padding: 0.4rem;"><i class="bi bi-trash"></i></button>
                              </form>
                              @endif
                         </td>
@@ -151,6 +151,11 @@
                     <div class="form-group">
                         <label class="form-label">Email Address</label>
                         <input type="email" name="email" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Phone / WhatsApp</label>
+                        <input type="text" name="phone" class="form-control" placeholder="+1234567890">
                     </div>
                     
                     <div class="form-group">

@@ -11,11 +11,8 @@ use App\Models\Lead;
 class CampaignDispatcher
 {
     public function __construct(
-        private SmsService           $sms,
         private WhatsAppService      $whatsapp,
         private EmailMarketingService $email,
-        private FacebookService      $facebook,
-        private InstagramService     $instagram,
     ) {}
 
     public function dispatch(Campaign $campaign): void
@@ -26,36 +23,20 @@ class CampaignDispatcher
         // Build contacts from segment
         $contacts = $this->buildContacts($campaign, $company);
         
-        if (in_array($campaign->channel, ['facebook', 'instagram'])) {
-            $campaign->update(['total_contacts' => 1]);
-            
+        $campaign->update(['total_contacts' => $contacts->count()]);
+
+        foreach ($contacts as $contact) {
             $cc = CampaignContact::create([
                 'campaign_id'  => $campaign->id,
-                'contact_type' => 'social',
-                'contact_id'   => 0,
-                'name'         => ucfirst($campaign->channel) . ' Post',
-                'phone'        => '',
-                'email'        => '',
+                'contact_type' => get_class($contact) === Customer::class ? 'customer' : 'lead',
+                'contact_id'   => $contact->id,
+                'name'         => $contact->name ?? ($contact->customer->name ?? ''),
+                'phone'        => $contact->phone ?? ($contact->customer->phone ?? ''),
+                'email'        => $contact->email ?? ($contact->customer->email ?? ''),
                 'status'       => 'pending',
             ]);
-            
+
             $this->sendToContact($campaign, $company, $cc);
-        } else {
-            $campaign->update(['total_contacts' => $contacts->count()]);
-
-            foreach ($contacts as $contact) {
-                $cc = CampaignContact::create([
-                    'campaign_id'  => $campaign->id,
-                    'contact_type' => get_class($contact) === Customer::class ? 'customer' : 'lead',
-                    'contact_id'   => $contact->id,
-                    'name'         => $contact->name ?? ($contact->customer->name ?? ''),
-                    'phone'        => $contact->phone ?? ($contact->customer->phone ?? ''),
-                    'email'        => $contact->email ?? ($contact->customer->email ?? ''),
-                    'status'       => 'pending',
-                ]);
-
-                $this->sendToContact($campaign, $company, $cc);
-            }
         }
 
         $sent   = $campaign->contacts()->where('status', 'sent')->count();
@@ -81,28 +62,55 @@ class CampaignDispatcher
 
     private function buildContacts(Campaign $campaign, Company $company)
     {
+        if ($campaign->segment === 'manual' && is_array($campaign->selected_contacts)) {
+            $customerIds = [];
+            $leadIds = [];
+            foreach ($campaign->selected_contacts as $sc) {
+                if (str_starts_with($sc, 'customer_')) $customerIds[] = str_replace('customer_', '', $sc);
+                if (str_starts_with($sc, 'lead_')) $leadIds[] = str_replace('lead_', '', $sc);
+            }
+            
+            $customers = Customer::where('company_id', $company->id)->whereIn('id', $customerIds)->get();
+            $leads = Lead::where('company_id', $company->id)->whereIn('id', $leadIds)->get();
+            return $customers->merge($leads);
+        }
+
         return match($campaign->segment) {
-            'customers' => Customer::where('company_id', $company->id)
-                              ->where('status', 'active')->get(),
-            'leads'     => Lead::where('company_id', $company->id)
-                              ->whereNotIn('stage', ['won', 'lost'])->get(),
-            'all'       => Customer::where('company_id', $company->id)->get(),
-            default     => Customer::where('company_id', $company->id)->get(),
+            'all'              => Customer::where('company_id', $company->id)->get()
+                                    ->merge(Lead::where('company_id', $company->id)->get()),
+            'customers_all'    => Customer::where('company_id', $company->id)->get(),
+            'customers_active' => Customer::where('company_id', $company->id)->where('status', 'active')->get(),
+            
+            'leads_all'        => Lead::where('company_id', $company->id)->get(),
+            'leads_active'     => Lead::where('company_id', $company->id)->whereNotIn('stage', ['won', 'lost', 'junk'])->get(),
+            'leads_new'        => Lead::where('company_id', $company->id)->where('stage', 'new')->get(),
+            'leads_engaged'    => Lead::where('company_id', $company->id)->whereIn('stage', ['contacted', 'survey_scheduled', 'quote_sent', 'negotiation'])->get(),
+            'leads_lost'       => Lead::where('company_id', $company->id)->where('stage', 'lost')->get(),
+            
+            default            => Customer::where('company_id', $company->id)->get(), // Fallback
         };
     }
 
     private function sendToContact(Campaign $campaign, Company $company, CampaignContact $cc): void
     {
-        $body    = $campaign->body;
+        $body = str_replace(
+            ['{name}', '{company}', '{email}', '{phone}'],
+            [$cc->name, $company->name, $cc->email, $cc->phone],
+            $campaign->body
+        );
+
         $subject = $campaign->subject ?? $campaign->name;
+        $subject = str_replace(
+            ['{name}', '{company}', '{email}', '{phone}'],
+            [$cc->name, $company->name, $cc->email, $cc->phone],
+            $subject
+        );
+
         $success = false;
 
         $success = match($campaign->channel) {
-            'sms'       => $cc->phone ? $this->sms->send($company, $cc->phone, $body) : false,
             'whatsapp'  => $cc->phone ? $this->whatsapp->send($company, $cc->phone, $body) : false,
             'email'     => $cc->email ? $this->email->send($company, $cc->email, $subject, $body) : false,
-            'facebook'  => $this->facebook->post($company, $body),
-            'instagram' => $this->instagram->post($company, $body),
             default     => false,
         };
 
